@@ -1,0 +1,106 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Política de privacidad · Rinde</title>
+<meta name="description" content="Qué datos usa Rinde y dónde se guardan.">
+<meta name="theme-color" content="#0f3d3e"><link rel="icon" href="../icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:0}body{margin:0}img{max-width:100%}</style>
+<title>Rinde</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&family=Montserrat:wght@500;800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: una columna tipo app de celular; en pantallas anchas, formulario a la izquierda y sobres a la derecha */
+:root{
+  --bg:#eef2ef; --surface:#ffffff; --surface-2:#e3e9e5; --fg:#13211f; --muted:#5c6d69; --line:#d3dcd8;
+  --ink:#0f3d3e; --ink-fg:#f2f7f5; --accent:#e3a23b; --good:#1f8a5b; --bad:#c2412d; --bad-soft:#fbe7e3;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d1514; --surface:#15201e; --surface-2:#1d2a28; --fg:#e4ece9; --muted:#93a5a0; --line:#28403b;
+  --ink:#16514f; --ink-fg:#eef6f3; --accent:#f0b55a; --good:#4cc08a; --bad:#ef7a64; --bad-soft:#3a1f1a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1514; --surface:#15201e; --surface-2:#1d2a28; --fg:#e4ece9; --muted:#93a5a0; --line:#28403b;
+  --ink:#16514f; --ink-fg:#eef6f3; --accent:#f0b55a; --good:#4cc08a; --bad:#ef7a64; --bad-soft:#3a1f1a; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 0}
+main{max-width:68ch;margin:0 auto;display:grid;gap:22px}
+h1,h2{font-family:var(--f-display);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h1{font-size:clamp(1.8rem,6vw,2.4rem);font-weight:800}
+h2{font-size:1.15rem;font-weight:700;margin-bottom:6px}
+p,ul{margin:0} ul{padding-left:1.2em;display:grid;gap:4px}
+a{color:var(--ink)} @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) a{color:var(--accent)}}
+.back{display:inline-flex;align-items:center;gap:8px;font-weight:600;text-decoration:none;color:var(--fg)}
+.lead{color:var(--muted)}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+.sum{display:grid;gap:8px}
+.sum div{display:flex;gap:10px;align-items:baseline} .sum b{min-width:1.2em;color:var(--good)}
+section{display:grid;gap:4px}
+.date{font-size:.85rem;color:var(--muted)}
+/* pie Hexacode */
+.foot{margin-top:48px;margin-left:calc(-1 * max(16px,env(safe-area-inset-left,0px)));margin-right:calc(-1 * max(16px,env(safe-area-inset-right,0px)));
+  background:var(--ink);color:var(--ink-fg);padding:28px max(16px,env(safe-area-inset-right,0px)) calc(28px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.foot .in{max-width:1040px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.foot .app{font-family:var(--f-display);font-weight:700;font-size:1.05rem;opacity:.55}
+.foot .hxb{display:inline-flex;align-items:center;gap:12px;color:var(--ink-fg);opacity:.62}
+.foot .hx{width:35px;height:40px}
+.foot .hxb{text-decoration:none;border-radius:8px;transition:opacity .2s}
+.foot .hxb:hover,.foot .hxb:focus-visible{opacity:1}
+.foot .hxb .by{font-size:.95rem;font-weight:500;opacity:.85}
+.foot .hxb .nm{font-family:var(--f-body);font-weight:600;font-size:1.55rem;letter-spacing:-.01em}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><g id="mkmono" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><path d="M703 140.5L915.2 263L915.2 508L703 630.5L490.8 508L490.8 263L703 140.5Z"/><path d="M703 243L824.2 313L824.2 453L703 523L581.8 453L581.8 313L703 243Z"/><path d="M490.8 263L581.8 313"/><path d="M915.2 263L824.2 313"/><path d="M490.8 508L581.8 453"/><path d="M915.2 508L824.2 453"/><path d="M703 140.5L703 383"/><path d="M703 523L703 630.5"/><path d="M703 140.5L581.8 313"/><path d="M703 140.5L824.2 313"/><path d="M703 630.5L581.8 453"/><path d="M703 630.5L824.2 453"/><path d="M490.8 508L581.8 313"/><path d="M915.2 508L824.2 313"/><path d="M581.8 453L824.2 313"/><path d="M703 383L824.2 453"/><path d="M703 140.5Q769.8 269.7 915.2 263"/><path d="M915.2 263Q836.7 385.5 915.2 508"/><path d="M915.2 508Q769.8 501.3 703 630.5"/><path d="M703 630.5Q636.2 501.3 490.8 508"/><path d="M490.8 508Q569.3 385.5 490.8 263"/><path d="M490.8 263Q636.2 269.7 703 140.5"/><path d="M585 388A118 78 0 1 0 821 388A118 78 0 1 0 585 388Z"/></g></defs></svg>
+<main>
+  <a class="back" href="../">‹ Volver a Rinde</a>
+  <header style="display:grid;gap:6px">
+    <h1>Política de privacidad de Rinde</h1>
+    <p class="date">Última actualización: 18 de noviembre de 2026</p>
+  </header>
+  <p class="lead">Rinde es una app para anotar ingresos y gastos y repartirlos en sobres. Está hecha para que tus números queden con vos.</p>
+
+  <div class="box sum" aria-label="Resumen">
+    <div><b>✓</b><span>No necesitás cuenta ni registrarte.</span></div>
+    <div><b>✓</b><span>Tus datos se guardan solo en tu celular o navegador.</span></div>
+    <div><b>✓</b><span>No enviamos tus datos a ningún servidor, no los vendemos ni los compartimos.</span></div>
+    <div><b>✓</b><span>No hay publicidad, ni estadísticas de uso, ni rastreadores.</span></div>
+    <div><b>✓</b><span>La app no pide permisos del teléfono.</span></div>
+  </div>
+
+  <section><h2>Qué datos usa la app</h2>
+    <p>Solo lo que vos cargás: montos de ingresos y gastos, fechas, detalles que escribas (por ejemplo, "supermercado"), y los nombres, colores y porcentajes de tus sobres.</p></section>
+
+  <section><h2>Dónde se guardan</h2>
+    <p>En el almacenamiento interno de la app en tu dispositivo. Nadie más tiene acceso a ellos, ni siquiera Hexacode. Si desinstalás la app o borrás sus datos, se pierden, salvo que hayas hecho una copia de seguridad.</p></section>
+
+  <section><h2>Copias de seguridad</h2>
+    <p>Desde la app podés exportar tus datos a un archivo. Ese archivo lo guardás o compartís vos donde quieras (por ejemplo, Google Drive o WhatsApp), y lo podés volver a importar. Rinde no lo sube a ningún lado por su cuenta. Tené en cuenta que cualquiera que tenga ese archivo puede ver tus números.</p></section>
+
+  <section><h2>Servicios de terceros</h2>
+    <ul>
+      <li><b>GitHub Pages</b> aloja la app. Como cualquier sitio web, puede registrar datos técnicos de la conexión (por ejemplo, la dirección IP) por seguridad. <a href="https://docs.github.com/es/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">Ver la política de GitHub</a>.</li>
+      <li><b>Google Fonts</b> provee las tipografías. Al cargarlas, tu dispositivo se conecta a los servidores de Google. <a href="https://policies.google.com/privacy?hl=es" target="_blank" rel="noopener">Ver la política de Google</a>.</li>
+    </ul>
+    <p>Ninguno de los dos recibe tus ingresos, gastos ni sobres.</p></section>
+
+  <section><h2>Menores de edad</h2>
+    <p>Rinde no está dirigida a menores de 13 años y no recolecta datos personales de nadie.</p></section>
+
+  <section><h2>Cambios en esta política</h2>
+    <p>Si algo cambia, vamos a actualizar esta página y la fecha de arriba.</p></section>
+
+  <section><h2>Contacto</h2>
+    <p>Rinde es desarrollada por Hexacode (Ramiro Almeyda, Santiago del Estero, Argentina). Para consultas sobre privacidad, escribinos desde <a href="https://hexacode.com.ar/contacto/" target="_blank" rel="noopener">hexacode.com.ar/contacto</a>.</p></section>
+</main>
+<footer class="foot">
+  <div class="in">
+    <a class="app" href="../" style="text-decoration:none;color:inherit">Rinde <small style="font-weight:500;opacity:.7">v1.11</small></a>
+    <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
+  </div>
+</footer>
+</body></html>

@@ -357,6 +357,24 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
           <div id="emsg" class="hint"></div>
         </div>
       </section>
+
+      <section class="panel" aria-labelledby="h-bk">
+        <h2 id="h-bk">Copia de seguridad</h2>
+        <p class="hint">Tus datos viven solo en este celular. Guardá una copia en Drive o mandatela por WhatsApp para no perderlos si cambiás de teléfono o desinstalás la app.</p>
+        <div class="row" style="justify-content:flex-start;gap:8px;flex-wrap:wrap">
+          <button class="btn small" type="button" id="bkExport">Guardar copia</button>
+          <button class="btn ghost small" type="button" id="bkImportBtn">Restaurar copia</button>
+          <input type="file" id="bkFile" accept=".json,application/json" hidden>
+        </div>
+        <div id="bkConfirm" class="note err" hidden>
+          <p id="bkConfirmText" style="margin:0 0 10px"></p>
+          <div class="row" style="justify-content:flex-start;gap:8px">
+            <button class="btn small" type="button" id="bkYes">Reemplazar mis datos</button>
+            <button class="btn ghost small" type="button" id="bkNo">Cancelar</button>
+          </div>
+        </div>
+        <div id="bkMsg" class="hint" aria-live="polite"></div>
+      </section>
     </div>
 
     <div style="display:grid;gap:20px;min-width:0">
@@ -373,7 +391,7 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
 </div>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.10</small></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.11</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
@@ -438,7 +456,9 @@ function localStore(){
     start(onCfg,onMovs){ onCfg(cfg); onMovs(movs); },
     async saveCfg(c){ cfg=c; LS.set('sobres.cfg',c); },
     async add(m){ m.id = 'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); movs=[...movs,m]; LS.set('sobres.movs',movs); render.onMovs(movs); },
-    async del(id){ movs=movs.filter(x=>x.id!==id); LS.set('sobres.movs',movs); render.onMovs(movs); }
+    async del(id){ movs=movs.filter(x=>x.id!==id); LS.set('sobres.movs',movs); render.onMovs(movs); },
+    snapshot(){ return {cfg, movs}; },
+    async replaceAll(c,m){ cfg=c; movs=m; if(!LS.set('sobres.cfg',c)||!LS.set('sobres.movs',m)) throw new Error('storage'); render.onCfg(cfg); render.onMovs(movs); }
   };
 }
 function dbStore(db, uid){
@@ -650,6 +670,53 @@ $('saveE').onclick=async()=>{
   const clean = state.editing.map(b=>({id:b.id,name:(b.name||'Sobre').trim().slice(0,24),pct:b.pct,color:b.color}));
   try{ await store.saveCfg({buckets:clean}); state.buckets=clean; closeEditor(); draw(); }
   catch(e){ $('emsg').textContent='No se pudo guardar. Probá de nuevo.'; }
+};
+
+// ---------- copia de seguridad ----------
+const nmov = n => n+(n===1?' movimiento':' movimientos');
+const bkMsg = (t, ok) => { const m=$('bkMsg'); m.className = ok ? 'ok' : 'hint'; m.textContent = t; };
+$('bkExport').onclick = async () => {
+  if(!store || !store.snapshot){ bkMsg('La copia de seguridad está disponible en la app instalada.'); return; }
+  const {cfg, movs} = store.snapshot();
+  const data = {app:'rinde', formato:1, exportado:new Date().toISOString(), sobres:(cfg&&cfg.buckets)||state.buckets, movimientos:movs};
+  const name = 'rinde-copia-' + today() + '.json';
+  const blob = new Blob([JSON.stringify(data, null, 1)], {type:'application/json'});
+  try{
+    const file = new File([blob], name, {type:'application/json'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:'Copia de Rinde', text:'Copia de seguridad de Rinde'});
+      bkMsg('Copia lista: '+nmov(movs.length)+'. Guardala en un lugar seguro.', true); return;
+    }
+  }catch(e){ if(e && e.name==='AbortError'){ bkMsg('Cancelaste la copia.'); return; } }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  bkMsg('Se descargó '+name+' ('+nmov(movs.length)+'). Lo encontrás en Descargas.', true);
+};
+let pending = null;
+$('bkImportBtn').onclick = () => { $('bkFile').value=''; $('bkFile').click(); };
+$('bkFile').onchange = async () => {
+  const f = $('bkFile').files[0]; if(!f) return;
+  try{
+    const d = JSON.parse(await f.text());
+    const okB = Array.isArray(d.sobres) && d.sobres.length && d.sobres.every(b=>b && typeof b.id==='string' && typeof b.name==='string' && typeof b.pct==='number');
+    const okM = Array.isArray(d.movimientos) && d.movimientos.every(m=>m && (m.type==='in'||m.type==='out') && typeof m.amount==='number' && typeof m.date==='string');
+    if(d.app!=='rinde' || !okB || !okM) throw new Error('formato');
+    const clean = d.movimientos.map(m=>({id:String(m.id||('r'+Math.random().toString(36).slice(2,10))), type:m.type, amount:Math.abs(m.amount),
+      note:String(m.note||'').slice(0,80), date:m.date.slice(0,10), createdAt:Number(m.createdAt)||0, ...(m.type==='out'?{bucket:String(m.bucket||'')}:{})}));
+    const buckets = d.sobres.map(b=>({id:b.id.slice(0,40), name:b.name.slice(0,24), pct:b.pct, color:/^#[0-9a-f]{6}$/i.test(b.color||'')?b.color:'#5f8f3a'}));
+    pending = {cfg:{buckets}, movs:clean};
+    const now = store && store.snapshot ? store.snapshot().movs.length : 0;
+    const when = d.exportado ? new Date(d.exportado).toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}) : 'fecha desconocida';
+    $('bkConfirmText').textContent = 'La copia es del '+when+' y tiene '+nmov(clean.length)+' y '+buckets.length+' sobres. Si la restaurás, reemplaza lo que tenés ahora ('+nmov(now)+').';
+    $('bkConfirm').hidden = false; bkMsg('');
+  }catch(e){ pending=null; $('bkConfirm').hidden=true; bkMsg('Ese archivo no es una copia de Rinde o está dañado. Elegí el archivo .json que guardaste desde "Guardar copia".'); }
+};
+$('bkNo').onclick = () => { pending=null; $('bkConfirm').hidden=true; bkMsg('No se cambió nada.'); };
+$('bkYes').onclick = async () => {
+  if(!pending) return;
+  try{ await store.replaceAll(pending.cfg, pending.movs); bkMsg('Copia restaurada: '+nmov(pending.movs.length)+'.', true); }
+  catch(e){ bkMsg('No se pudo restaurar. Probá de nuevo.'); }
+  pending=null; $('bkConfirm').hidden=true;
 };
 
 // ---------- arranque ----------
