@@ -380,11 +380,11 @@ const pad = n => String(n).padStart(2,'0');
 const today = () => { const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; };
 const PALETTE = ['#2f7d6d','#e3a23b','#4a78c2','#c2577a','#7a62c4','#3aa0a8','#a8763a','#5f8f3a'];
 const DEFAULT_BUCKETS = [
-  {id:'alquiler', name:'Alquiler', pct:30, color:'#2f7d6d'},
-  {id:'comida', name:'Comida', pct:25, color:'#e3a23b'},
-  {id:'viaje', name:'Viaje', pct:15, color:'#4a78c2'},
-  {id:'disfrutar', name:'Disfrutar', pct:15, color:'#c2577a'},
-  {id:'ahorro', name:'Ahorro', pct:15, color:'#7a62c4'},
+  {id:'comida', name:'Comida', pct:16, color:'#e3a23b'},
+  {id:'boleto', name:'Boleto', pct:28, color:'#4a78c2'},
+  {id:'uber', name:'Uber', pct:5, color:'#3aa0a8'},
+  {id:'ahorro', name:'Ahorro', pct:36, color:'#7a62c4'},
+  {id:'libre', name:'Libre', pct:15, color:'#c2577a'},
 ];
 
 const state = {
@@ -397,13 +397,14 @@ const state = {
 function demoMovs(){
   const m = state.month;
   return [
-    {id:'d1',type:'in',amount:950000,note:'Sueldo',date:m+'-01'},
-    {id:'d2',type:'out',amount:280000,bucket:'alquiler',note:'Alquiler',date:m+'-03'},
-    {id:'d3',type:'out',amount:68500,bucket:'comida',note:'Supermercado',date:m+'-05'},
-    {id:'d4',type:'out',amount:24000,bucket:'disfrutar',note:'Cine y pizza',date:m+'-08'},
-    {id:'d5',type:'out',amount:41200,bucket:'comida',note:'Verdulería y carnicería',date:m+'-12'},
+    {id:'d1',type:'in',amount:190000,note:'Cobro semanal',date:m+'-02'},
+    {id:'d2',type:'out',amount:9000,bucket:'boleto',note:'Boleto',date:m+'-03'},
+    {id:'d3',type:'out',amount:5000,bucket:'comida',note:'Comida del día',date:m+'-03'},
+    {id:'d4',type:'out',amount:3000,bucket:'uber',note:'Uber',date:m+'-04'},
+    {id:'d5',type:'out',amount:12000,bucket:'libre',note:'Salida',date:m+'-07'},
   ];
 }
+
 const isDemo = () => state.loaded && state.movs.length === 0;
 
 // ---------- almacenamiento ----------
