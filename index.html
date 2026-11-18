@@ -156,7 +156,7 @@ input,select{width:100%;background:var(--bg);border:1px solid var(--line);border
 </style>
 <style>
 .intro{position:fixed;inset:0;z-index:200;pointer-events:none;animation:gonei 0s 8.5s forwards}
-.it-ov{position:absolute;inset:0;background:var(--bg)}
+.it-ov{position:absolute;left:0;top:0;right:0;bottom:auto;height:max(100%,100lvh);min-height:300vh;background:var(--bg)}
 .it-c{position:absolute;left:0;top:0;display:block}
 .intro .it-m{position:fixed;left:50%;top:50%;translate:-50% -50%;display:block;overflow:visible;opacity:0;will-change:transform,opacity}
 .it-x{position:fixed;left:50%;top:calc(50% + var(--hx,300px)*.6);transform:translateX(-50%);text-align:center;white-space:nowrap}
@@ -265,7 +265,7 @@ function render(t){
 /* ---- agujero hexagonal que crece y muestra la página ---- */
 function f1(x){return x.toFixed(1)}
 function clip(Sc){var r=R0*Sc,a=r*.866,h=r/2;
-ov.style.clipPath='path(evenodd,"M0 0H'+vw+'V'+vh+'H0Z M'+f1(cx)+' '+f1(cy-r)+'L'+f1(cx+a)+' '+f1(cy-h)+'L'+f1(cx+a)+' '+f1(cy+h)+'L'+f1(cx)+' '+f1(cy+r)+'L'+f1(cx-a)+' '+f1(cy+h)+'L'+f1(cx-a)+' '+f1(cy-h)+'Z")'}
+ov.style.clipPath='path(evenodd,"M-20 -20H'+(vw+20)+'V'+(vh*3+20)+'H-20Z M'+f1(cx)+' '+f1(cy-r)+'L'+f1(cx+a)+' '+f1(cy-h)+'L'+f1(cx+a)+' '+f1(cy+h)+'L'+f1(cx)+' '+f1(cy+r)+'L'+f1(cx-a)+' '+f1(cy+h)+'L'+f1(cx-a)+' '+f1(cy-h)+'Z")'}
 function sm(x){return x*x*x*(x*(x*6-15)+10)}
 function ss(x){x=cl(x);return x*x*(3-2*x)}
 var TS=2.95,TF=.3,Z0=3.3,ZD=3.4,T0=performance.now(),holed=false,cvOn=true;
