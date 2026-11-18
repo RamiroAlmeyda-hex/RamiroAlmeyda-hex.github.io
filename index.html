@@ -153,6 +153,7 @@ input,select{width:100%;background:var(--bg);border:1px solid var(--line);border
 @keyframes wi{to{opacity:1}}
 @keyframes wo{to{opacity:0}}
 @media(prefers-reduced-motion:reduce){.intro{display:none}}
+.intro:not(.go),.intro:not(.go) *{animation-play-state:paused!important}
 </style>
 <style>
 .intro{position:fixed;inset:0;z-index:200;pointer-events:none;animation:gonei 0s 8.5s forwards}
@@ -269,13 +270,18 @@ function clip(Sc){var r=R0*Sc,a=r*.866,h=r/2;
 ov.style.clipPath='path(evenodd,"M-20 -20H'+(vw+20)+'V'+(vh*3+20)+'H-20Z M'+f1(cx)+' '+f1(cy-r)+'L'+f1(cx+a)+' '+f1(cy-h)+'L'+f1(cx+a)+' '+f1(cy+h)+'L'+f1(cx)+' '+f1(cy+r)+'L'+f1(cx-a)+' '+f1(cy+h)+'L'+f1(cx-a)+' '+f1(cy-h)+'Z")'}
 function sm(x){return x*x*x*(x*(x*6-15)+10)}
 function ss(x){x=cl(x);return x*x*(3-2*x)}
-var TS=2.95,TF=.3,Z0=3.3,ZD=3.4,T0=performance.now(),holed=false,cvOn=true;
-(function f(now){var t=(now-T0)/1000;
+var TS=2.95,TF=.3,Z0=3.3,ZD=3.4,T0=0,holed=false,cvOn=true;
+function f(now){var t=(now-T0)/1000;
   if(cvOn){render(Math.min(t,TS+TF));if(t>=TS+TF){cvOn=false;cv.remove()}else if(t>=TS)cv.style.opacity=(1-ss((t-TS)/TF)).toFixed(3)}
   if(t>=TS){if(!holed){holed=true;clip(1)}
     im.style.opacity=(Z0+.1>t?ss((t-TS)/TF):1-ss((t-Z0-.1)/1.4)).toFixed(3)}
   if(t>=Z0){var Sc=Math.pow(Smax,sm(Math.min((t-Z0)/ZD,1)));clip(Sc);im.style.transform='scale('+Sc.toFixed(4)+')'}
-  if(Z0+ZD>t)requestAnimationFrame(f);else I.remove()})(T0);
+  if(Z0+ZD>t)requestAnimationFrame(f);else I.remove()}
+/* Arrancar recién cuando la pantalla está visible, las fuentes cargadas y la pantalla de inicio de Android ya se fue */
+var started=false;
+function begin(){if(started)return;started=true;requestAnimationFrame(function(){requestAnimationFrame(function(){setTimeout(function(){T0=performance.now();I.classList.add('go');requestAnimationFrame(f)},350)})})}
+function whenReady(){var fr=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();Promise.race([fr,new Promise(function(r){setTimeout(r,1200)})]).then(begin)}
+if(document.visibilityState==='visible')whenReady();else document.addEventListener('visibilitychange',function v(){if(document.visibilityState==='visible'){document.removeEventListener('visibilitychange',v);whenReady()}});
 })();
 </script>
 <!-- /Intro Hexacode -->
@@ -367,7 +373,7 @@ var TS=2.95,TF=.3,Z0=3.3,ZD=3.4,T0=performance.now(),holed=false,cvOn=true;
 </div>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.9</small></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.10</small></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
