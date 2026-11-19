@@ -285,6 +285,114 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
 })();
 </script>
 <!-- /Intro Hexacode -->
+<style>
+/* ---- asistente de porcentajes ---- */
+.wizcta{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 16px;align-items:start;position:relative;overflow:hidden}
+.wizcta::before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--accent)}
+.wizcta .ic{grid-row:1/4;width:46px;height:46px;border-radius:14px;background:var(--ink);display:grid;place-items:center}
+.wizcta h2{font-size:1.1rem;font-weight:700}
+.wizcta p{margin:0;color:var(--muted);font-size:.9rem}
+.wizcta .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.wiz{position:fixed;inset:0;z-index:100;display:grid;align-items:end;justify-items:center}
+@media (min-width:700px){.wiz{align-items:center}}
+.wiz-back{position:absolute;inset:0;background:rgba(5,15,14,.55);backdrop-filter:blur(3px)}
+.wiz-sheet{position:relative;width:min(560px,100%);max-height:min(92vh,100%);display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:var(--bg);color:var(--fg);
+  border-radius:24px 24px 0 0;box-shadow:0 -20px 60px rgba(0,0,0,.35);overflow:hidden}
+@media (min-width:700px){.wiz-sheet{border-radius:24px}}
+.wiz-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px max(18px,env(safe-area-inset-right,0px)) 8px max(18px,env(safe-area-inset-left,0px))}
+.wiz-steps{display:flex;gap:6px;align-items:center;font-size:.8rem;color:var(--muted);font-weight:600}
+.wiz-steps i{width:28px;height:5px;border-radius:99px;background:var(--line)}
+.wiz-steps i.on{background:var(--accent)}
+.wiz-x{border:0;background:var(--surface-2);width:36px;height:36px;border-radius:50%;color:var(--muted);font-size:1rem}
+.wiz-body{overflow:auto;padding:6px max(18px,env(safe-area-inset-right,0px)) 18px max(18px,env(safe-area-inset-left,0px));overscroll-behavior:contain}
+.wiz-body section{display:grid;gap:14px}
+.wiz-body h2{font-size:1.45rem;font-weight:800;letter-spacing:-.01em}
+.wiz-foot{display:flex;gap:10px;justify-content:space-between;padding:12px max(18px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));border-top:1px solid var(--line);background:var(--bg)}
+.wiz-foot .btn{flex:1}
+.wiz-foot .btn.ghost{flex:0 0 auto}
+.wiz-foot .btn:disabled{opacity:.45;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 14px;font-weight:600;font-size:.88rem;color:var(--fg)}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--ink-fg);border-color:var(--ink)}
+.chips.add button{color:var(--muted)}
+.chips.add button:hover{color:var(--fg);border-color:var(--fg)}
+.wz-calc{margin:0;font-size:.9rem;color:var(--muted)}
+.wz-calc b{color:var(--fg)}
+.wz-item{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:10px}
+.wz-item .top{display:grid;grid-template-columns:minmax(0,1fr) 36px;gap:8px;align-items:center}
+.wz-item .top input{font-weight:700}
+.wz-item .del{border:1px solid var(--line);background:transparent;border-radius:10px;height:40px;color:var(--muted)}
+.wz-item .del:hover{color:var(--bad);border-color:var(--bad)}
+.wz-item .mid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px}
+.wz-item .times{display:flex;align-items:center;gap:10px;font-size:.88rem;color:var(--muted)}
+.wz-item .times .step{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.wz-item .times .step button{border:0;background:var(--surface-2);width:34px;height:34px;font-size:1.1rem;color:var(--fg)}
+.wz-item .times .step span{min-width:30px;text-align:center;font-weight:700;color:var(--fg)}
+.wz-item .out{font-size:.85rem;color:var(--muted)}
+.wz-item .out b{color:var(--fg)}
+.wz-tot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:600;padding:12px 14px;border-radius:12px;background:var(--surface-2)}
+.wz-tot.bad{background:var(--bad-soft);color:var(--bad)}
+.wz-bar{display:flex;height:14px;border-radius:99px;overflow:hidden;background:var(--surface-2)}
+.wz-bar i{display:block;height:100%}
+.wz-res{display:grid;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px 14px}
+.wz-res .r{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+.wz-res .r:last-child{border-bottom:0}
+.wz-res .r .d{width:12px;height:12px;border-radius:4px}
+.wz-res .r b{font-weight:600;overflow-wrap:anywhere}
+.wz-res .r small{color:var(--muted);font-size:.82rem;white-space:nowrap}
+.wz-res .r .p{font-family:var(--f-display);font-weight:800;font-size:1.15rem;min-width:3.2ch;text-align:right}
+.wz-split{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px}
+.wz-split .lbls{display:flex;justify-content:space-between;font-weight:600;font-size:.9rem}
+.wz-split input[type=range]{width:100%;accent-color:var(--accent);padding:0;border:0;background:none}
+.wz-done{color:var(--good);font-weight:600;font-size:.88rem}
+</style>
+
+<div class="wiz" id="wiz" hidden role="dialog" aria-modal="true" aria-labelledby="wzTitle1">
+  <div class="wiz-back" id="wzBackdrop"></div>
+  <div class="wiz-sheet">
+    <header class="wiz-head">
+      <div class="wiz-steps" aria-hidden="true"><i></i><i></i><i></i><span id="wzStepLbl">Paso 1 de 3</span></div>
+      <button class="wiz-x" type="button" id="wzClose" aria-label="Cerrar el asistente">✕</button>
+    </header>
+    <div class="wiz-body" id="wzBody">
+      <section data-step="1">
+        <h2 id="wzTitle1">¿Cuánto cobrás?</h2>
+        <p class="hint">Poné lo que te entra, como lo cobrás. Si cobrás distinto cada vez, usá un promedio.</p>
+        <label for="wzInc">Monto
+          <div class="money"><span>$</span><input id="wzInc" inputmode="decimal" placeholder="0" autocomplete="off"></div>
+        </label>
+        <div class="chips" role="group" aria-label="Cada cuánto cobrás" id="wzIncFreq">
+          <button type="button" data-f="semana">Por semana</button><button type="button" data-f="quincena">Por quincena</button><button type="button" data-f="mes">Por mes</button>
+        </div>
+        <p class="wz-calc" id="wzIncMonth" aria-live="polite"></p>
+      </section>
+      <section data-step="2" hidden>
+        <h2>Tus gastos fijos</h2>
+        <p class="hint">Lo que pagás sí o sí. Cargalo como te salga más fácil: por día, por semana, por mes o cada 2 meses.</p>
+        <div id="wzList" style="display:grid;gap:10px"></div>
+        <div class="chips add" id="wzQuick" aria-label="Agregar un gasto"></div>
+        <div class="wz-tot" id="wzTot" aria-live="polite"></div>
+      </section>
+      <section data-step="3" hidden>
+        <h2>Tu reparto</h2>
+        <p class="hint" id="wzResHint"></p>
+        <div class="wz-bar" id="wzBar" aria-hidden="true"></div>
+        <div class="wz-res" id="wzRes"></div>
+        <div class="wz-split" id="wzSplit">
+          <div class="lbls"><span id="wzSA">Ahorro</span><span id="wzSD">Disfrutar</span></div>
+          <label for="wzRange" class="hint" style="font-weight:500">Lo que sobra, ¿cómo lo repartís?</label>
+          <input type="range" id="wzRange" min="0" max="100" step="10" value="50">
+        </div>
+        <div class="note err" id="wzOver" hidden></div>
+        <p class="hint">Redondeamos los gastos fijos para arriba, así cada sobre te alcanza. Después podés ajustar todo desde Editar.</p>
+      </section>
+    </div>
+    <footer class="wiz-foot">
+      <button class="btn ghost" type="button" id="wzPrev">Atrás</button>
+      <button class="btn" type="button" id="wzNext">Siguiente</button>
+    </footer>
+  </div>
+</div>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -299,6 +407,14 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
   </header>
 
   <div id="status" class="note" hidden></div>
+
+  <section class="wizcta" id="wizCta" hidden aria-labelledby="h-wizcta">
+    <div class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f0b55a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg></div>
+    <h2 id="h-wizcta">Armá tus sobres según tus gastos</h2>
+    <p>Contale a Rinde cuánto cobrás y lo que pagás sí o sí (alquiler, colectivo, luz…) y te calcula los porcentajes.</p>
+    <div class="acts"><button class="btn small" type="button" id="wizOpen">Calcular mis porcentajes</button><button class="btn ghost small" type="button" id="wizLater">Ahora no</button></div>
+  </section>
+
 
   <section class="hero" aria-label="Resumen del mes">
     <div>
@@ -342,7 +458,8 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
 
       <section class="panel" aria-labelledby="h-edit">
         <div class="row"><h2 id="h-edit">Porcentajes</h2>
-          <button class="btn ghost small" id="toggleEdit" type="button">Editar</button></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn ghost small" id="wizOpen2" type="button">Calcular por mis gastos</button><button class="btn ghost small" id="toggleEdit" type="button">Editar</button></div></div>
+        <div id="wzDone" class="wz-done" hidden aria-live="polite"></div>
         <div id="pctView" class="hint"></div>
         <div id="editor" class="edit" hidden>
           <div id="erows" class="edit"></div>
@@ -391,7 +508,7 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
 </div>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.12</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.13</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
@@ -506,7 +623,7 @@ function compute(){
 
 // ---------- render ----------
 const render = {
-  onCfg(c){ if(c && Array.isArray(c.buckets) && c.buckets.length) state.buckets = c.buckets; draw(); },
+  onCfg(c){ if(c && Array.isArray(c.buckets) && c.buckets.length){ state.buckets = c.buckets; state.hasCfg = true; } draw(); },
   onMovs(list){ state.movs = list; state.loaded = true; draw(); }
 };
 
@@ -528,6 +645,7 @@ function draw(){
   // estado
   if(isDemo()) showStatus('Estos son datos de ejemplo para que veas cómo funciona. Cuando anotes tu primer ingreso o gasto, desaparecen. Tus datos se guardan solo en este celular.','demo');
   else if(!$('status').classList.contains('err')) $('status').hidden = true;
+  $('wizCta').hidden = !(state.loaded && !state.hasCfg && !wizDismissed());
 
   const left = income-spent;
   $('left').textContent = money(left); $('left').classList.toggle('neg', left<0);
@@ -668,7 +786,7 @@ $('saveE').onclick=async()=>{
   if(!state.editing.length){ $('emsg').textContent='Necesitás al menos un sobre.'; return; }
   if(sumE()!==100){ $('emsg').textContent='Los porcentajes tienen que sumar 100 % para guardar.'; return; }
   const clean = state.editing.map(b=>({id:b.id,name:(b.name||'Sobre').trim().slice(0,24),pct:b.pct,color:b.color}));
-  try{ await store.saveCfg({buckets:clean}); state.buckets=clean; closeEditor(); draw(); }
+  try{ await store.saveCfg({buckets:clean}); state.buckets=clean; state.hasCfg=true; closeEditor(); draw(); }
   catch(e){ $('emsg').textContent='No se pudo guardar. Probá de nuevo.'; }
 };
 
@@ -717,6 +835,179 @@ $('bkYes').onclick = async () => {
   try{ await store.replaceAll(pending.cfg, pending.movs); bkMsg('Copia restaurada: '+nmov(pending.movs.length)+'.', true); }
   catch(e){ bkMsg('No se pudo restaurar. Probá de nuevo.'); }
   pending=null; $('bkConfirm').hidden=true;
+};
+
+// ---------- asistente de porcentajes ----------
+// Rinde Pro: cuando exista, la versión gratis puede limitar los gastos fijos cambiando este número.
+const WZ_MAX_ITEMS = Infinity;
+const WK = 52/12;
+const FREQ = [['vez','por día o por viaje'],['semana','por semana'],['quincena','por quincena'],['mes','por mes'],['bimestre','cada 2 meses']];
+const PER_MONTH = {vez:WK, semana:WK, quincena:2, mes:1, bimestre:.5};
+const QUICK = [['Alquiler','mes',0],['Colectivo','vez',5],['Comida','vez',7],['Luz','bimestre',0],['Gas','bimestre',0],['Internet','mes',0],['Celular','mes',0],['Expensas','mes',0],['Uber','vez',3],['Otro','mes',0]];
+const slug = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'') || 'sobre';
+const wz = {step:1, inc:'', incFreq:'mes', items:[], split:50};
+try{ const d = LS.get('rinde.asistente'); if(d && typeof d==='object'){ Object.assign(wz, {inc:d.inc||'', incFreq:d.incFreq||'mes', items:Array.isArray(d.items)?d.items:[], split:typeof d.split==='number'?d.split:50}); } }catch(e){}
+const wzSave = () => { try{ LS.set('rinde.asistente', {inc:wz.inc, incFreq:wz.incFreq, items:wz.items, split:wz.split}); }catch(e){} };
+const incMonthly = () => { const v=parseAmount(wz.inc); return v>0 ? v*PER_MONTH[wz.incFreq] : 0; };
+const itemMonthly = it => { const v=parseAmount(it.amt); if(!(v>0)) return 0; return it.f==='vez' ? v*(it.times||1)*WK : v*PER_MONTH[it.f]; };
+const wizDismissed = () => { try{ return localStorage.getItem('rinde.asistente.ocultar')==='1'; }catch(e){ return false; } };
+
+function wzPlan(){
+  const im = incMonthly();
+  // juntar gastos con el mismo nombre
+  const byName = new Map();
+  wz.items.forEach(it => { const m=itemMonthly(it); if(!(m>0)) return; const name=(it.name||'').trim()||'Gasto'; const k=slug(name);
+    const o=byName.get(k)||{name, monthly:0}; o.monthly+=m; byName.set(k,o); });
+  const fixed = [...byName.values()];
+  const totalFixed = fixed.reduce((s,f)=>s+f.monthly,0);
+  if(!(im>0)) return {im, fixed, totalFixed, over:false, rows:[]};
+  const exact = fixed.map(f=>f.monthly/im*100);
+  const over = totalFixed > im + 0.5;
+  let pcts = exact.map(x=>Math.max(1, Math.ceil(x-1e-9)));
+  if(!over && pcts.reduce((a,b)=>a+b,0) > 100){
+    // si redondear para arriba se pasa de 100, se reparte el resto al más cercano
+    const fl = exact.map(x=>Math.max(1,Math.floor(x))); let rest = 100 - fl.reduce((a,b)=>a+b,0);
+    const ord = exact.map((x,i)=>[x-Math.floor(x),i]).sort((a,b)=>b[0]-a[0]);
+    for(const [,i] of ord){ if(rest<=0) break; fl[i]++; rest--; } pcts = fl;
+  }
+  const used = pcts.reduce((a,b)=>a+b,0);
+  const left = Math.max(0, 100-used);
+  const rows = fixed.map((f,i)=>({name:f.name, pct:pcts[i], monthly:f.monthly}));
+  const ah = Math.round(left*wz.split/100), di = left-ah;
+  const addTo = (name, pct) => { if(pct<=0) return; const k=slug(name); const r=rows.find(x=>slug(x.name)===k); if(r){ r.pct+=pct; r.extra=(r.extra||0)+pct; } else rows.push({name, pct, monthly:im*pct/100, leftover:true}); };
+  addTo('Ahorro', ah); addTo('Disfrutar', di);
+  return {im, fixed, totalFixed, over, rows, left};
+}
+function wzBuckets(rows){
+  const used = new Set(), out=[]; let ci=0;
+  const nextColor = taken => { for(let k=0;k<PALETTE.length*2;k++){ const c=PALETTE[(ci++)%PALETTE.length]; if(!taken.has(c)||k>=PALETTE.length) return c; } return PALETTE[0]; };
+  const taken = new Set();
+  rows.forEach(r => {
+    const k=slug(r.name);
+    const prev = state.buckets.find(b=>b.id===k || slug(b.name)===k);
+    let id = prev ? prev.id : k; let n=2; while(used.has(id)) id = k+'-'+(n++);
+    used.add(id);
+    const color = prev && !taken.has(prev.color) ? prev.color : nextColor(taken); taken.add(color);
+    out.push({id, name:r.name.slice(0,24), pct:r.pct, color});
+  });
+  return out;
+}
+
+function wzRenderStep(){
+  document.querySelectorAll('#wzBody section').forEach(s=>{ s.hidden = Number(s.dataset.step)!==wz.step; });
+  document.querySelectorAll('.wiz-steps i').forEach((d,i)=>d.classList.toggle('on', i<wz.step));
+  $('wzStepLbl').textContent = 'Paso '+wz.step+' de 3';
+  $('wzPrev').hidden = wz.step===1;
+  $('wzNext').textContent = wz.step===3 ? 'Usar este reparto' : 'Siguiente';
+  $('wzBody').scrollTop = 0; $('wzNext').disabled = false;
+  if(wz.step===1) wzRender1(); if(wz.step===2) wzRender2(); if(wz.step===3) wzRender3();
+}
+function wzRender1(){
+  $('wzInc').value = wz.inc;
+  document.querySelectorAll('#wzIncFreq button').forEach(b=>b.setAttribute('aria-pressed', String(b.dataset.f===wz.incFreq)));
+  const im = incMonthly();
+  $('wzIncMonth').innerHTML = '';
+  if(im>0){ $('wzIncMonth').append(wz.incFreq==='mes' ? 'Por mes: ' : 'Eso es, por mes, unos ', el('b',{text:money(im)})); }
+}
+function wzRender2(){
+  const list=$('wzList'); list.replaceChildren();
+  const im = incMonthly();
+  wz.items.forEach((it,idx)=>{
+    const name=el('input',{value:it.name||'','aria-label':'Nombre del gasto',id:'wzN'+idx,maxlength:'24',placeholder:'Ej: Alquiler'});
+    name.oninput=()=>{ it.name=name.value; wzSave(); upd(); };
+    const del=el('button',{type:'button',class:'del','aria-label':'Quitar '+(it.name||'gasto'),text:'✕'});
+    del.onclick=()=>{ wz.items.splice(idx,1); wzSave(); wzRender2(); };
+    const amt=el('input',{value:it.amt||'',inputmode:'decimal',placeholder:'0','aria-label':'Monto de '+(it.name||'gasto'),id:'wzA'+idx,autocomplete:'off'});
+    amt.oninput=()=>{ it.amt=amt.value; wzSave(); upd(); };
+    const sel=el('select',{'aria-label':'Cada cuánto','id':'wzF'+idx});
+    FREQ.forEach(([v,l])=>{ const o=el('option',{value:v,text:l}); if(v===it.f) o.selected=true; sel.append(o); });
+    sel.onchange=()=>{ it.f=sel.value; if(it.f==='vez' && !it.times) it.times=5; wzSave(); wzRender2(); };
+    const times=el('div',{class:'times'});
+    if(it.f==='vez'){
+      const minus=el('button',{type:'button','aria-label':'Menos veces por semana',text:'−'}), plus=el('button',{type:'button','aria-label':'Más veces por semana',text:'+'});
+      const n=el('span',{class:'num',text:String(it.times||1)});
+      minus.onclick=()=>{ it.times=Math.max(1,(it.times||1)-1); n.textContent=it.times; wzSave(); upd(); };
+      plus.onclick=()=>{ it.times=Math.min(7,(it.times||1)+1); n.textContent=it.times; wzSave(); upd(); };
+      times.append(el('span',{class:'step'},[minus,n,plus]), 'veces por semana');
+    }
+    const out=el('div',{class:'out','aria-live':'polite'});
+    function upd(){
+      const m=itemMonthly(it); out.replaceChildren();
+      if(!(m>0)){ out.textContent='Poné cuánto gastás.'; }
+      else { out.append('≈ ', el('b',{class:'num',text:money(m)}), ' por mes'); if(im>0) out.append(' · ', el('b',{class:'num',text:(m/im*100).toFixed(1).replace('.',',')+' %'}), ' de lo que cobrás'); }
+      wzTotals();
+    }
+    list.append(el('div',{class:'wz-item'},[ el('div',{class:'top'},[name,del]), el('div',{class:'mid'},[ el('div',{class:'money'},[el('span',{text:'$'}),amt]), sel ]), it.f==='vez'?times:null, out ]));
+    upd();
+  });
+  const q=$('wzQuick'); q.replaceChildren();
+  const names = new Set(wz.items.map(i=>slug(i.name)));
+  const canAdd = wz.items.length < WZ_MAX_ITEMS;
+  QUICK.forEach(([n,f,t])=>{ if(n!=='Otro' && names.has(slug(n))) return;
+    const b=el('button',{type:'button',text:'+ '+n}); b.disabled=!canAdd;
+    b.onclick=()=>{ wz.items.push({name:n==='Otro'?'':n, amt:'', f, times:t||5}); wzSave(); wzRender2(); const i=wz.items.length-1; const fld=$(n==='Otro'?'wzN'+i:'wzA'+i); if(fld) fld.focus(); };
+    q.append(b); });
+  wzTotals();
+}
+function wzTotals(){
+  const p=wzPlan(), t=$('wzTot'); t.replaceChildren(); t.classList.remove('bad');
+  if(!wz.items.length){ t.append('Tocá un gasto de arriba para agregarlo.'); return; }
+  t.append(el('span',{text:'Gastos fijos por mes'}), el('span',{class:'num',text:money(p.totalFixed)+(p.im>0?' · '+Math.round(p.totalFixed/p.im*100)+' %':'')}));
+  if(p.over) t.classList.add('bad');
+}
+function wzRender3(){
+  const p=wzPlan();
+  $('wzResHint').textContent = 'Cobrás unos '+money(p.im)+' por mes. Así queda cada sobre:';
+  const bar=$('wzBar'), res=$('wzRes'); bar.replaceChildren(); res.replaceChildren();
+  $('wzOver').hidden = !p.over;
+  if(p.over){
+    $('wzOver').textContent = 'Tus gastos fijos ('+money(p.totalFixed)+' por mes) superan lo que cobrás por '+money(p.totalFixed-p.im)+'. Revisá los montos o la frecuencia en el paso anterior.';
+    $('wzSplit').hidden = true; $('wzNext').disabled = true; return;
+  }
+  $('wzNext').disabled = false;
+  const bk = wzBuckets(p.rows);
+  bk.forEach((b,i)=>{
+    const r=p.rows[i];
+    bar.append(el('i',{style:`width:${b.pct}%;background:${b.color}`}));
+    const sub = r.leftover ? 'Lo que sobra' : money(r.monthly)+' / mes'+(r.extra?' + sobrante':'');
+    res.append(el('div',{class:'r'},[ el('span',{class:'d',style:'background:'+b.color}), el('b',{text:b.name}), el('small',{class:'num',text:sub}), el('span',{class:'p num',text:b.pct+' %'}) ]));
+  });
+  $('wzSplit').hidden = !(p.left>0);
+  if(p.left>0){
+    const ah=Math.round(p.left*wz.split/100);
+    $('wzSA').textContent='Ahorro '+ah+' %'; $('wzSD').textContent='Disfrutar '+(p.left-ah)+' %';
+    $('wzRange').value = wz.split;
+  }
+}
+function wzOpen(){
+  if(!wz.items.length){
+    // arrancar con lo que ya tiene en sus sobres como ideas, o con los más comunes
+    wz.items = [{name:'Alquiler',amt:'',f:'mes',times:5},{name:'Colectivo',amt:'',f:'vez',times:5},{name:'Comida',amt:'',f:'vez',times:7}];
+  }
+  wz.step = 1; $('wiz').hidden=false; document.body.style.overflow='hidden'; wzRenderStep();
+  setTimeout(()=>$('wzInc').focus(), 50);
+}
+function wzClose(){ $('wiz').hidden=true; document.body.style.overflow=''; }
+$('wizOpen').onclick = wzOpen; $('wizOpen2').onclick = wzOpen;
+$('wizLater').onclick = () => { try{ localStorage.setItem('rinde.asistente.ocultar','1'); }catch(e){} $('wizCta').hidden=true; };
+$('wzClose').onclick = wzClose; $('wzBackdrop').onclick = wzClose;
+document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('wiz').hidden) wzClose(); });
+$('wzInc').oninput = () => { wz.inc=$('wzInc').value; wzSave(); wzRender1(); };
+document.querySelectorAll('#wzIncFreq button').forEach(b=>b.onclick=()=>{ wz.incFreq=b.dataset.f; wzSave(); wzRender1(); });
+$('wzRange').oninput = () => { wz.split=Number($('wzRange').value); wzSave(); wzRender3(); };
+$('wzPrev').onclick = () => { if(wz.step>1){ wz.step--; wzRenderStep(); } };
+$('wzNext').onclick = async () => {
+  if(wz.step===1){ if(!(incMonthly()>0)){ $('wzIncMonth').textContent='Escribí cuánto cobrás para seguir.'; $('wzInc').focus(); return; } wz.step=2; wzRenderStep(); return; }
+  if(wz.step===2){ wz.step=3; wzRenderStep(); return; }
+  const p=wzPlan(); if(p.over || !p.rows.length) return;
+  const buckets = wzBuckets(p.rows);
+  try{
+    await store.saveCfg({buckets});
+    state.buckets = buckets; state.hasCfg = true; wzClose(); draw();
+    $('wzDone').textContent = 'Listo: tus sobres se armaron según tus gastos.'; $('wzDone').hidden=false;
+    setTimeout(()=>{ $('wzDone').hidden=true; }, 6000);
+    $('h-edit').scrollIntoView({behavior:'smooth', block:'center'});
+  }catch(e){ $('wzResHint').textContent='No se pudo guardar. Probá de nuevo.'; }
 };
 
 // ---------- arranque ----------
