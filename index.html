@@ -31,7 +31,6 @@ button{cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* encabezado */
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:10px}
 .brand svg{flex:none}
 .brand h1{font-size:1.45rem;font-weight:800;letter-spacing:-.01em}
@@ -393,6 +392,67 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
     </footer>
   </div>
 </div>
+<style>
+/* ---- encabezado con botón de ayuda ---- */
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"brand month help";align-items:center;gap:10px}
+.top .brand{grid-area:brand;min-width:0}
+.top .month{grid-area:month}
+.helpbtn{grid-area:help;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);
+  font:800 1.15rem/1 var(--f-display);display:grid;place-items:center}
+.helpbtn:hover{border-color:var(--fg)}
+@media (max-width:460px){
+  .top{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand help" "month month"}
+  .top .month{justify-content:space-between}
+  .top .month span{flex:1}
+}
+/* ---- ayuda guiada ---- */
+#help .wiz-sheet{height:min(88vh,720px)}
+.hp-title{font-family:var(--f-display);font-size:1.35rem;font-weight:800;letter-spacing:-.01em;margin:0}
+.hp-title:focus{outline:none}
+.hp-search{position:relative}
+.hp-search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);pointer-events:none}
+.hp-search input{padding-left:40px}
+.hp-group{display:grid;gap:0}
+.hp-group h3{font-family:var(--f-body);font-size:.75rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:18px 0 6px}
+.hp-q{border-bottom:1px solid var(--line)}
+.hp-q summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 2px;font-weight:600}
+.hp-q summary::-webkit-details-marker{display:none}
+.hp-q summary::after{content:"";flex:none;width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translate(-2px,-2px);transition:transform .2s}
+.hp-q[open] summary::after{transform:rotate(-135deg) translate(-2px,-2px)}
+.hp-a{display:grid;gap:10px;padding:0 2px 16px;color:var(--fg);line-height:1.5}
+.hp-a p{margin:0}
+.hp-a ol{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.hp-a .go{justify-self:start}
+.hp-empty{color:var(--muted);padding:18px 2px}
+.hp-foot{font-size:.88rem;color:var(--muted);flex-wrap:wrap;align-items:center}
+.hp-foot a{color:var(--fg);font-weight:600}
+@keyframes hpflash{0%,100%{box-shadow:0 0 0 0 transparent}25%,70%{box-shadow:0 0 0 4px var(--accent)}}
+.flash{animation:hpflash 1.8s ease}
+@media (prefers-reduced-motion:reduce){.flash{animation:none;outline:3px solid var(--accent);outline-offset:2px}.hp-q summary::after{transition:none}}
+</style>
+
+<div class="wiz" id="help" hidden role="dialog" aria-modal="true" aria-labelledby="hpTitle">
+  <div class="wiz-back" id="hpBackdrop"></div>
+  <div class="wiz-sheet">
+    <header class="wiz-head">
+      <h2 class="hp-title" id="hpTitle" tabindex="-1">Ayuda</h2>
+      <button class="wiz-x" type="button" id="hpClose" aria-label="Cerrar la ayuda">✕</button>
+    </header>
+    <div class="wiz-body" id="hpBody">
+      <label class="hp-search" for="hpQ"><span class="hint" style="font-weight:500">Buscá tu duda</span>
+        <span style="position:relative;display:block">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" style="color:var(--muted)"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="hpQ" type="search" placeholder="Ej: borrar, rojo, copia" autocomplete="off" enterkeyhint="search">
+        </span>
+      </label>
+      <div id="hpList"></div>
+      <p class="hp-empty" id="hpEmpty" hidden aria-live="polite"></p>
+    </div>
+    <footer class="wiz-foot hp-foot">
+      <span>¿No encontrás tu respuesta? Escribinos desde <a href="https://hexacode.com.ar" target="_blank" rel="noopener">hexacode.com.ar</a></span>
+    </footer>
+  </div>
+</div>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -404,6 +464,7 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
       <span id="mlabel" class="num">—</span>
       <button id="next" aria-label="Mes siguiente">›</button>
     </div>
+    <button class="helpbtn" type="button" id="helpOpen" aria-label="Ayuda" title="Ayuda">?</button>
   </header>
 
   <div id="status" class="note" hidden></div>
@@ -508,7 +569,7 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
 </div>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.13</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.14</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
@@ -1009,6 +1070,132 @@ $('wzNext').onclick = async () => {
     $('h-edit').scrollIntoView({behavior:'smooth', block:'center'});
   }catch(e){ $('wzResHint').textContent='No se pudo guardar. Probá de nuevo.'; }
 };
+
+// ---------- ayuda guiada ----------
+const HELP = [
+  ['Empezar', [
+    ['¿Para qué sirve Rinde?', 'sirve que es app',
+      '<p>Anotás lo que cobrás y lo que gastás. Cada vez que cobrás, Rinde reparte esa plata en tus sobres según los porcentajes que elegiste, y te muestra cuánto te queda en cada uno y en todo el mes.</p>'],
+    ['¿Qué son los sobres?', 'sobre metodo categoria',
+      '<p>Es el método de guardar la plata en sobres: cada sobre es una parte de lo que cobrás para algo concreto (comida, colectivo, ahorro…). El porcentaje de cada sobre dice qué parte de cada ingreso va ahí.</p>', 'sobres', 'Ver mis sobres'],
+    ['¿Cómo armo mis sobres según mis gastos?', 'asistente calcular porcentajes armar',
+      '<p>Usá el asistente: le contás cuánto cobrás y lo que pagás sí o sí (alquiler, colectivo, luz…) y te calcula los porcentajes. Lo que sobra va a Ahorro y Disfrutar.</p>', 'wizard', 'Abrir el asistente'],
+    ['¿Por qué veo movimientos que no son míos?', 'ejemplo datos demo',
+      '<p>Son datos de ejemplo para que veas cómo funciona. Desaparecen solos cuando anotás tu primer ingreso o gasto.</p>'],
+  ]],
+  ['Anotar', [
+    ['¿Cómo anoto un gasto?', 'gasto cargar agregar compra',
+      '<ol><li>En <b>Anotar</b>, dejá elegido <b>Gasto</b>.</li><li>Escribí el monto y elegí el sobre.</li><li>Si querés, agregá un detalle (ej: supermercado) y tocá <b>Agregar gasto</b>.</li></ol>', 'gasto', 'Anotar un gasto'],
+    ['¿Cómo anoto lo que cobré?', 'ingreso cobro sueldo cobrar',
+      '<p>En <b>Anotar</b>, elegí <b>Ingreso</b>, escribí el monto y tocá <b>Agregar ingreso</b>. Rinde lo reparte solo entre tus sobres.</p>', 'ingreso', 'Anotar un ingreso'],
+    ['Me equivoqué, ¿cómo borro un movimiento?', 'borrar error equivoque eliminar editar corregir',
+      '<p>En <b>Movimientos</b>, tocá la ✕ del que querés sacar y confirmá con <b>Borrar</b>. Si era un error de monto, borralo y volvé a cargarlo bien.</p>', 'movs', 'Ir a Movimientos'],
+    ['¿Puedo anotar algo de otro día?', 'fecha dia ayer otro',
+      '<p>Sí: cambiá la <b>Fecha</b> antes de agregarlo. Si es de otro mes, Rinde te muestra ese mes.</p>', 'gasto', 'Ir a Anotar'],
+    ['¿Cómo veo otros meses?', 'mes meses anterior historial',
+      '<p>Usá las flechas ‹ › al lado del nombre del mes, arriba de todo. Cada mes tiene sus propios ingresos y gastos.</p>', 'meses', 'Mostrame dónde'],
+  ]],
+  ['Sobres y porcentajes', [
+    ['¿Por qué un sobre está en rojo?', 'rojo pase pasado excedido negativo',
+      '<p>Gastaste más de lo que le tocaba a ese sobre este mes. La tarjeta te dice por cuánto te pasaste. Podés compensarlo gastando menos en otro sobre o ajustar los porcentajes.</p>', 'sobres', 'Ver mis sobres'],
+    ['¿Cómo cambio los porcentajes o agrego un sobre?', 'cambiar porcentaje editar agregar sobre nombre color',
+      '<p>En <b>Porcentajes</b>, tocá <b>Editar</b>. Podés cambiar nombres, colores y porcentajes, agregar o quitar sobres. Para guardar, todo tiene que sumar 100 %.</p>', 'editar', 'Editar porcentajes'],
+    ['¿Qué pasa con la plata que me sobra?', 'sobra sobrante proximo mes acumula',
+      '<p>Cada mes arranca de cero. Si te sobró, podés anotarla como ingreso del mes siguiente (por ejemplo, "Sobrante de noviembre") para que se vuelva a repartir.</p>'],
+    ['¿Qué significa "Gastado"?', 'gastado porcentaje resumen',
+      '<p>Es qué parte de lo que cobraste este mes ya gastaste. Por ejemplo, 40 % quiere decir que te queda el 60 %.</p>'],
+    ['¿Qué es el sobre "Sin sobre"?', 'sin sobre borrado',
+      '<p>Junta los gastos que habías anotado en un sobre que después borraste o renombraste desde Editar.</p>'],
+  ]],
+  ['Copias y privacidad', [
+    ['¿Dónde se guardan mis datos?', 'datos privacidad guardan seguro nube',
+      '<p>Solo en este celular. No se mandan a ningún servidor y nadie más los ve, ni siquiera Hexacode.</p><p><a href="privacidad/">Leer la política de privacidad</a></p>'],
+    ['¿Cómo hago una copia de seguridad?', 'copia backup guardar resguardo drive',
+      '<p>En <b>Copia de seguridad</b>, tocá <b>Guardar copia</b> y mandala a Google Drive, a tu WhatsApp o adonde quieras.</p>', 'copia', 'Ir a Copia de seguridad'],
+    ['¿Cómo paso mis datos a otro celular?', 'celular nuevo pasar cambiar telefono restaurar',
+      '<ol><li>En el celular viejo, tocá <b>Guardar copia</b> y mandatela.</li><li>En el nuevo, abrí Rinde y tocá <b>Restaurar copia</b>.</li><li>Elegí el archivo y confirmá.</li></ol>', 'copia', 'Ir a Copia de seguridad'],
+    ['¿Qué pasa si desinstalo la app?', 'desinstalar borrar app perder',
+      '<p>Se borran tus datos, salvo que tengas una copia guardada. Antes de desinstalar o cambiar de celular, hacé una copia.</p>', 'copia', 'Hacer una copia'],
+  ]],
+  ['La app', [
+    ['¿Funciona sin internet?', 'internet offline conexion datos',
+      '<p>Sí. Después de abrirla una vez con internet, podés usarla sin conexión.</p>'],
+    ['¿Cómo la pongo en modo oscuro?', 'oscuro tema claro noche',
+      '<p>Rinde sigue el tema de tu celular: si lo tenés en modo oscuro, la app también se ve oscura.</p>'],
+    ['¿Cuesta algo?', 'gratis precio pago costo publicidad anuncios',
+      '<p>No. Rinde es gratis y no tiene publicidad.</p>'],
+  ]],
+];
+const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+(function buildHelp(){
+  const list = $('hpList');
+  HELP.forEach(([group, qs], gi) => {
+    const g = el('div', {class:'hp-group'});
+    g.append(el('h3', {text:group}));
+    qs.forEach(([q, keys, html, go, goLabel], qi) => {
+      const d = el('details', {class:'hp-q', id:'hpq-'+gi+'-'+qi});
+      d.append(el('summary', {text:q}));
+      const a = el('div', {class:'hp-a'}); a.innerHTML = html;
+      if(go){ const b = el('button', {class:'btn ghost small go', type:'button', 'data-go':go, text:goLabel+' →'}); a.append(b); }
+      d.append(a);
+      d.dataset.k = norm(q+' '+keys+' '+a.textContent);
+      g.append(d);
+    });
+    list.append(g);
+  });
+})();
+function helpFilter(){
+  const q = norm($('hpQ').value.trim());
+  const words = q.split(/\s+/).filter(Boolean);
+  let shown = 0;
+  document.querySelectorAll('#hpList .hp-group').forEach(g => {
+    let any = false;
+    g.querySelectorAll('.hp-q').forEach(d => {
+      const ok = !words.length || words.every(w => d.dataset.k.includes(w));
+      d.hidden = !ok; if(ok){ any = true; shown++; }
+    });
+    g.hidden = !any;
+  });
+  const vis = [...document.querySelectorAll('#hpList .hp-q')].filter(d=>!d.hidden);
+  vis.forEach(d => { d.open = words.length>0 && vis.length<=2; });
+  if(!words.length) document.querySelectorAll('#hpList .hp-q').forEach(d=>{ d.open=false; });
+  $('hpEmpty').hidden = shown>0;
+  if(!shown) $('hpEmpty').textContent = 'No encontramos nada con "'+$('hpQ').value.trim()+'". Probá con otra palabra, como "gasto", "copia" o "sobre".';
+}
+let helpReturn = null;
+function helpOpen(){
+  helpReturn = document.activeElement;
+  $('hpQ').value=''; helpFilter();
+  $('help').hidden=false; document.body.style.overflow='hidden'; $('hpBody').scrollTop=0;
+  setTimeout(()=>$('hpTitle').focus(), 30);
+}
+function helpClose(restore){
+  $('help').hidden=true; document.body.style.overflow='';
+  if(restore!==false && helpReturn && helpReturn.focus) helpReturn.focus();
+}
+function flash(node){ if(!node) return; node.classList.remove('flash'); void node.offsetWidth; node.classList.add('flash'); setTimeout(()=>node.classList.remove('flash'), 1900); }
+function goTo(node, focusEl){
+  if(!node) return;
+  node.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
+  flash(node);
+  if(focusEl) setTimeout(()=>focusEl.focus({preventScroll:true}), 450);
+}
+$('hpList').addEventListener('click', e => {
+  const b = e.target.closest('[data-go]'); if(!b) return;
+  const go = b.dataset.go;
+  helpClose(false);
+  if(go==='wizard'){ wzOpen(); return; }
+  if(go==='gasto' || go==='ingreso'){ setType(go==='gasto'?'out':'in'); goTo($('form'), $('f-amt')); return; }
+  if(go==='movs'){ goTo($('h-mov').closest('.panel')); return; }
+  if(go==='sobres'){ goTo($('h-env').closest('section')); return; }
+  if(go==='copia'){ goTo($('h-bk').closest('.panel'), $('bkExport')); return; }
+  if(go==='editar'){ if($('editor').hidden) openEditor(); goTo($('h-edit').closest('.panel')); return; }
+  if(go==='meses'){ window.scrollTo({top:0, behavior:'smooth'}); flash(document.querySelector('.month')); setTimeout(()=>$('next').focus({preventScroll:true}), 400); return; }
+});
+$('helpOpen').onclick = helpOpen;
+$('hpClose').onclick = () => helpClose(); $('hpBackdrop').onclick = () => helpClose();
+$('hpQ').addEventListener('input', helpFilter);
+document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('help').hidden) helpClose(); });
 
 // ---------- arranque ----------
 $('f-date').value = today();
