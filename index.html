@@ -453,6 +453,67 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
     </footer>
   </div>
 </div>
+<style>
+/* ---- recorrido guiado ---- */
+.tour{--tdim:rgba(4,16,16,.66);position:fixed;inset:0;z-index:150;pointer-events:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tour{--tdim:rgba(0,0,0,.78)}:root:not([data-theme="light"]) .tour-tip{background:var(--surface-2);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}}
+:root[data-theme="dark"] .tour{--tdim:rgba(0,0,0,.78)}:root[data-theme="dark"] .tour-tip{background:var(--surface-2);border-color:color-mix(in srgb,var(--accent) 40%,var(--line))}
+.tour-dim{position:fixed;inset:0;background:var(--tdim);pointer-events:auto;display:none}
+.tour.is-center .tour-dim{display:block}
+.tour-ring{position:fixed;border-radius:14px;box-shadow:0 0 0 3px var(--accent),0 0 0 200vmax var(--tdim);pointer-events:none}
+.tour-ring::after{content:"";position:absolute;inset:-3px;border-radius:inherit}
+.tour.is-act .tour-ring::after{animation:tourpulse 1.5s ease-out infinite}
+@keyframes tourpulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 85%,transparent)}100%{box-shadow:0 0 0 16px transparent}}
+.tour-b,.tour-full{position:fixed;pointer-events:auto}
+.tour-full{inset:0}
+.tour.is-act .tour-full,.tour.is-center .tour-full,.tour.is-center .tour-ring,.tour.is-center .tour-b,.tour.is-center .tour-arrow,.tour-arrow.off{display:none}
+.tour-tip{position:fixed;top:0;left:0;width:min(350px,calc(100vw - 24px));background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:18px;
+  padding:12px 16px 16px;box-shadow:0 20px 50px rgba(0,0,0,.4);pointer-events:auto;display:grid;gap:8px;transition:opacity .2s ease}
+.tour-tip.swap{opacity:0}
+.tour.is-center .tour-tip{top:50%!important;left:50%!important;translate:-50% -50%;width:min(390px,calc(100vw - 32px));padding:24px 20px 20px;gap:12px}
+.tour-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tour-n{font-size:.82rem;font-weight:700;color:var(--muted)}
+.tour-x{border:0;background:transparent;color:var(--muted);font:600 .92rem var(--f-body);padding:8px 2px 8px 10px;min-height:40px}
+.tour-x:hover{color:var(--fg)}
+.tour-bar{height:4px;border-radius:4px;background:var(--surface-2);overflow:hidden}
+.tour-bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:inherit;transition:width .3s}
+.tour.is-center .tour-top,.tour.is-center .tour-bar{display:none}
+.tour-ic{display:none}
+.tour.is-center .tour-ic{display:block;width:56px;height:56px}
+.tour-ic svg{width:56px;height:56px}
+.tour-t{font:800 1.18rem/1.2 var(--f-display);margin:2px 0 0;letter-spacing:-.01em}
+.tour.is-center .tour-t{font-size:1.45rem}
+.tour-t:focus{outline:none}
+.tour-p{margin:0;line-height:1.5}
+.tour-p b{white-space:nowrap}
+.tour-acts{display:flex;justify-content:flex-end;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px}
+.tour-acts .btn{min-height:44px;padding-inline:16px;font-size:.95rem}
+.tour-acts .btn:disabled{opacity:.45;cursor:not-allowed}
+.tour.is-center .tour-acts{justify-content:stretch}
+.tour.is-center .tour-acts .btn{flex:1 1 auto}
+.tour-arrow{position:fixed;width:36px;height:36px;color:var(--accent);pointer-events:none;animation:tourbob 1s ease-in-out infinite;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}
+.tour-arrow.up{rotate:180deg}
+@keyframes tourbob{0%,100%{translate:0 0}50%{translate:0 7px}}
+.tour-tip.nudge{animation:tournudge .35s}
+@keyframes tournudge{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.tour-arrow,.tour.is-act .tour-ring::after,.tour-tip.nudge{animation:none}.tour-tip,.tour-bar i{transition:none}}
+</style>
+
+<div class="tour" id="tour" hidden>
+  <div class="tour-dim" id="tourDim"></div>
+  <div class="tour-ring" id="tourRing"></div>
+  <div class="tour-b" id="tb1"></div><div class="tour-b" id="tb2"></div><div class="tour-b" id="tb3"></div><div class="tour-b" id="tb4"></div>
+  <div class="tour-full" id="tourFull"></div>
+  <svg class="tour-arrow off" id="tourArrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v16M5 12l7 7 7-7"/></svg>
+  <div class="tour-tip" id="tourTip" role="dialog" aria-modal="false" aria-labelledby="tourT" aria-describedby="tourP">
+    <div class="tour-top"><span class="tour-n" id="tourN"></span><button class="tour-x" type="button" id="tourX">Salir</button></div>
+    <div class="tour-bar" aria-hidden="true"><i id="tourBar"></i></div>
+    <div class="tour-ic" id="tourIc" aria-hidden="true"></div>
+    <h2 class="tour-t" id="tourT" tabindex="-1"></h2>
+    <p class="tour-p" id="tourP" aria-live="polite"></p>
+    <div class="tour-acts"><button class="btn ghost small" type="button" id="tourDo"></button><button class="btn small" type="button" id="tourNext"></button></div>
+  </div>
+</div>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -569,7 +630,7 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
 </div>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.14</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.15</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
@@ -617,10 +678,12 @@ function demoMovs(){
 }
 
 
-const isDemo = () => state.loaded && state.movs.length === 0;
+let tourFlag = (() => { try{ return localStorage.getItem('rinde.tour'); }catch(e){ return null; } })();
+const isDemo = () => state.loaded && state.movs.length === 0 && !tourSB && tourFlag !== 'done';
 
 // ---------- almacenamiento ----------
 let store = null;
+let realMovs = [], tourSB = null;
 const LS = {
   get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
   set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ return false; } }
@@ -685,7 +748,7 @@ function compute(){
 // ---------- render ----------
 const render = {
   onCfg(c){ if(c && Array.isArray(c.buckets) && c.buckets.length){ state.buckets = c.buckets; state.hasCfg = true; } draw(); },
-  onMovs(list){ state.movs = list; state.loaded = true; draw(); }
+  onMovs(list){ realMovs = list; if(tourSB) return; state.movs = list; state.loaded = true; draw(); tourMaybe(); }
 };
 
 function el(tag, attrs={}, kids=[]){
@@ -706,7 +769,7 @@ function draw(){
   // estado
   if(isDemo()) showStatus('Estos son datos de ejemplo para que veas cómo funciona. Cuando anotes tu primer ingreso o gasto, desaparecen. Tus datos se guardan solo en este celular.','demo');
   else if(!$('status').classList.contains('err')) $('status').hidden = true;
-  $('wizCta').hidden = !(state.loaded && !state.hasCfg && !wizDismissed());
+  $('wizCta').hidden = !(state.loaded && !state.hasCfg && !wizDismissed() && !tourSB);
 
   const left = income-spent;
   $('left').textContent = money(left); $('left').classList.toggle('neg', left<0);
@@ -798,7 +861,7 @@ $('form').addEventListener('submit', async e=>{
   const m = {type:state.type, amount, note:$('f-note').value.trim().slice(0,80), date:$('f-date').value||today(), createdAt:Date.now()};
   if(state.type==='out') m.bucket = $('f-bucket').value;
   try{
-    await store.add(m);
+    await (tourSB || store).add(m);
     $('f-amt').value=''; $('f-note').value='';
     if(!m.date.startsWith(state.month)){ state.month=m.date.slice(0,7); draw(); }
     msg.className='ok'; msg.textContent = (m.type==='in'?'Ingreso':'Gasto')+' de '+money(amount)+' anotado.';
@@ -807,7 +870,7 @@ $('form').addEventListener('submit', async e=>{
 
 async function removeMov(id){
   state.confirmId=null;
-  try{ await store.del(id); }catch(e){ showStatus('No se pudo borrar el movimiento.','err'); }
+  try{ await (tourSB || store).del(id); }catch(e){ showStatus('No se pudo borrar el movimiento.','err'); }
   draw();
 }
 
@@ -1074,6 +1137,8 @@ $('wzNext').onclick = async () => {
 // ---------- ayuda guiada ----------
 const HELP = [
   ['Empezar', [
+    ['¿Me mostrás cómo se usa?', 'recorrido tutorial guia como se usa primera vez aprender',
+      '<p>Sí. El recorrido guiado te muestra paso a paso cómo anotar un cobro y un gasto, y cómo se reparte la plata. Practicás con datos de prueba que se borran al final: lo tuyo no se toca.</p>', 'tour', 'Ver el recorrido'],
     ['¿Para qué sirve Rinde?', 'sirve que es app',
       '<p>Anotás lo que cobrás y lo que gastás. Cada vez que cobrás, Rinde reparte esa plata en tus sobres según los porcentajes que elegiste, y te muestra cuánto te queda en cada uno y en todo el mes.</p>'],
     ['¿Qué son los sobres?', 'sobre metodo categoria',
@@ -1081,7 +1146,7 @@ const HELP = [
     ['¿Cómo armo mis sobres según mis gastos?', 'asistente calcular porcentajes armar',
       '<p>Usá el asistente: le contás cuánto cobrás y lo que pagás sí o sí (alquiler, colectivo, luz…) y te calcula los porcentajes. Lo que sobra va a Ahorro y Disfrutar.</p>', 'wizard', 'Abrir el asistente'],
     ['¿Por qué veo movimientos que no son míos?', 'ejemplo datos demo',
-      '<p>Son datos de ejemplo para que veas cómo funciona. Desaparecen solos cuando anotás tu primer ingreso o gasto.</p>'],
+      '<p>Son datos de ejemplo para que veas cómo funciona. Desaparecen solos cuando anotás tu primer ingreso o gasto, o cuando hacés el recorrido guiado.</p>'],
   ]],
   ['Anotar', [
     ['¿Cómo anoto un gasto?', 'gasto cargar agregar compra',
@@ -1184,6 +1249,7 @@ $('hpList').addEventListener('click', e => {
   const b = e.target.closest('[data-go]'); if(!b) return;
   const go = b.dataset.go;
   helpClose(false);
+  if(go==='tour'){ tourStart(); return; }
   if(go==='wizard'){ wzOpen(); return; }
   if(go==='gasto' || go==='ingreso'){ setType(go==='gasto'?'out':'in'); goTo($('form'), $('f-amt')); return; }
   if(go==='movs'){ goTo($('h-mov').closest('.panel')); return; }
@@ -1196,6 +1262,215 @@ $('helpOpen').onclick = helpOpen;
 $('hpClose').onclick = () => helpClose(); $('hpBackdrop').onclick = () => helpClose();
 $('hpQ').addEventListener('input', helpFilter);
 document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('help').hidden) helpClose(); });
+
+// ---------- recorrido guiado ----------
+const T = {on:false, ui:false, i:0, raf:0, last:'', bucket:null, spentB:null, asked:false};
+let sbMovs = [];
+const tourSet = v => { tourFlag = v; try{ localStorage.setItem('rinde.tour', v); }catch(e){} };
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reduceMo = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const segBtn = t => document.querySelector('.seg button[data-t="'+t+'"]');
+const amtLabel = () => $('f-amt').closest('label');
+const amtOk = () => parseAmount($('f-amt').value) > 0;
+const cardOf = id => document.querySelectorAll('#env .card')[Math.max(0, state.buckets.findIndex(b=>b.id===id))];
+const bInfo = id => { const bs = compute().buckets; return bs.find(b=>b.id===id) || bs[0]; };
+const TOUR = [
+  {id:'welcome', center:true},
+  {id:'hero', el:()=>document.querySelector('.hero'), t:'Esto es lo que te queda',
+    p:()=>'Acá arriba ves cuánta plata te queda en el mes. Ahora dice <b>'+money(0)+'</b> porque todavía no anotaste nada. Cada mes arranca de cero.'},
+  {id:'in', el:()=>segBtn('in'), act:true, wait:'type-in', t:'Primero, lo que cobrás',
+    p:'Cada vez que cobres, lo anotás como ingreso. Tocá <b>Ingreso</b>.', doIt:()=>{ setType('in'); return true; }},
+  {id:'inAmt', el:amtLabel, act:true, input:true, fill:'500.000', t:'¿Cuánto cobraste?',
+    p:'Es de práctica: escribí un sueldo de mentira, por ejemplo <b>500.000</b>.'},
+  {id:'inAdd', el:()=>$('f-submit'), act:true, submit:true, fill:'500.000', t:'Guardalo',
+    p:'Tocá <b>Agregar ingreso</b>.'},
+  {id:'split', el:()=>cardOf(T.bucket), t:'Rinde lo repartió solo',
+    p:()=>{ const b=bInfo(T.bucket); return 'Tu ingreso se repartió entre tus sobres según los porcentajes. A <b>'+esc(b.name)+'</b> le tocan <b>'+money(b.assigned)+'</b>, el '+b.pct+' %.'; }},
+  {id:'out', el:()=>segBtn('out'), act:true, wait:'type-out', t:'Ahora, un gasto',
+    p:'Cada vez que gastes algo, anotalo. Tocá <b>Gasto</b>.', doIt:()=>{ setType('out'); return true; }},
+  {id:'outAmt', el:()=>[amtLabel(), $('bucketWrap')], act:true, input:true, fill:'20.000', t:'¿Cuánto y de qué sobre?',
+    p:()=>'Escribí un gasto de prueba, por ejemplo <b>20.000</b>. Abajo elegís de qué sobre sale: dejalo en <b>'+esc(bInfo(T.bucket).name)+'</b>.',
+    enter:()=>{ $('f-bucket').value = T.bucket; }},
+  {id:'outAdd', el:()=>$('f-submit'), act:true, submit:true, fill:'20.000', t:'Guardalo',
+    p:'Tocá <b>Agregar gasto</b>.'},
+  {id:'spent', el:()=>cardOf(T.spentB||T.bucket), t:'Se descontó del sobre',
+    p:()=>{ const b=bInfo(T.spentB||T.bucket); return b.left<0
+      ? 'Te pasaste por <b>'+money(-b.left)+'</b> en <b>'+esc(b.name)+'</b>: cuando gastás más de lo que tiene un sobre, la tarjeta se pone en rojo.'
+      : 'A <b>'+esc(b.name)+'</b> ahora le quedan <b>'+money(b.left)+'</b>. Si gastás más de lo que tiene, la tarjeta se pone en rojo para avisarte.'; }},
+  {id:'list', el:()=>$('h-mov').closest('section'), t:'Todo queda anotado',
+    p:'Acá ves los movimientos del mes. Si te equivocaste en uno, tocá la <b>✕</b> para borrarlo y cargalo de nuevo.'},
+  {id:'pct', el:()=>$('h-edit').closest('section'), t:'Tus porcentajes',
+    p:'Acá cambiás cuánto va a cada sobre. Si no sabés qué poner, tocá <b>Calcular por mis gastos</b> y Rinde los arma por vos.'},
+  {id:'bk', el:()=>$('h-bk').closest('section'), t:'Guardá una copia',
+    p:'Tus datos viven solo en este celular. Cada tanto tocá <b>Guardar copia</b> y mandala a tu Drive o a tu WhatsApp.'},
+  {id:'help', el:()=>$('helpOpen'), t:'Si tenés dudas',
+    p:'Tocá el <b>?</b> y encontrás las respuestas a las preguntas más comunes. Desde ahí también podés repetir este recorrido.'},
+  {id:'end', center:true},
+];
+const tIdx = id => TOUR.findIndex(s=>s.id===id);
+const NSTEPS = TOUR.length - 2;
+
+function tourOpenUI(){
+  if(!$('tourIc').firstChild){ const ic=document.querySelector('.appicon'); if(ic) $('tourIc').append(ic.cloneNode(true)); }
+  $('tour').hidden=false; T.ui=true; cancelAnimationFrame(T.raf); tourFrame();
+}
+function tourClose(){ T.ui=false; cancelAnimationFrame(T.raf); $('tour').hidden=true; }
+function tourFrame(){ if(!T.ui) return; T.raf=requestAnimationFrame(tourFrame); tourPlace(); }
+
+function tourStart(){
+  if(!$('help').hidden) helpClose(false);
+  if(!$('wiz').hidden) wzClose();
+  if(!$('editor').hidden) closeEditor();
+  if(!T.on){
+    T.month0=state.month; T.date0=$('f-date').value; T.msg0=[$('f-msg').className, $('f-msg').textContent];
+  }
+  T.bucket=(state.buckets.find(b=>b.id==='comida')||state.buckets[0]).id; T.spentB=null;
+  state.month=today().slice(0,7); state.confirmId=null;
+  $('f-date').value=today(); $('f-amt').value=''; $('f-note').value=''; setType('out');
+  $('f-msg').className='hint'; $('f-msg').textContent='';
+  sbMovs=[];
+  tourSB={
+    async add(m){ m.id='t'+(sbMovs.length+1); sbMovs=[...sbMovs,m]; state.movs=sbMovs; draw(); tourEvt('add', m); },
+    async del(id){ sbMovs=sbMovs.filter(x=>x.id!==id); state.movs=sbMovs; draw(); }
+  };
+  state.movs=[]; T.on=true; draw();
+  if(!T.ui) tourOpenUI();
+  tourGo(1);
+}
+// Vuelve todo como estaba: lo de práctica nunca se guardó.
+function tourClean(){
+  if(!T.on) return;
+  T.on=false; tourSB=null; sbMovs=[];
+  state.movs=realMovs; state.month=T.month0; state.confirmId=null;
+  $('f-amt').value=''; $('f-note').value=''; $('f-date').value=T.date0||today(); setType('out');
+  $('f-msg').className=T.msg0[0]; $('f-msg').textContent=T.msg0[1];
+  tourSet('done'); draw();
+}
+function tourExit(){ tourClean(); tourClose(); }
+
+function tourGo(i){
+  T.i=i; T.last='';
+  const s=TOUR[i], tip=$('tourTip'), root=$('tour');
+  if(s.id==='end') tourClean();
+  if(s.enter) s.enter();
+  root.classList.toggle('is-center', !!s.center);
+  root.classList.toggle('is-act', !!s.act);
+  const nx=$('tourNext'), dz=$('tourDo');
+  nx.disabled=false; nx.hidden=false; dz.hidden=false;
+  if(s.id==='welcome'){
+    $('tourT').textContent='¡Hola! Esto es Rinde';
+    $('tourP').textContent='Te mostramos cómo usarla en un minuto. Vas a practicar anotando un cobro y un gasto de prueba. Al terminar se borra todo y empezás con tus datos.';
+    nx.textContent='Mostrame cómo'; dz.textContent='Ahora no';
+  } else if(s.id==='end'){
+    const fresh = !realMovs.length;
+    $('tourT').textContent='¡Listo, ya sabés usar Rinde!';
+    $('tourP').textContent = fresh
+      ? 'Borramos todo lo que anotaste para practicar. Ahora empezá con tus datos: anotá lo que cobraste este mes.'
+      : 'Borramos lo que anotaste para practicar. Tus datos quedaron como estaban.';
+    const anotar = () => { setType('in'); goTo($('form'), $('f-amt')); };
+    if(fresh && !state.hasCfg){ nx.textContent='Armar mis sobres'; T.endMain=wzOpen; dz.textContent='Anotar mi primer ingreso'; T.endAlt=anotar; }
+    else if(fresh){ nx.textContent='Anotar mi primer ingreso'; T.endMain=anotar; dz.hidden=true; }
+    else { nx.textContent='Cerrar'; T.endMain=null; dz.hidden=true; }
+  } else {
+    $('tourN').textContent='Paso '+i+' de '+NSTEPS;
+    $('tourBar').style.width=(i/NSTEPS*100)+'%';
+    $('tourT').textContent=s.t;
+    $('tourP').innerHTML=typeof s.p==='function' ? s.p() : s.p;
+    if(s.act){ dz.textContent='Hacelo por mí'; nx.hidden=!s.input; nx.textContent='Siguiente'; nx.disabled=!amtOk(); }
+    else { dz.hidden=true; nx.textContent = i===NSTEPS ? 'Terminar' : 'Siguiente'; }
+  }
+  if(s.center){ tip.classList.remove('swap'); setTimeout(()=>nx.focus(), 40); return; }
+  tip.classList.add('swap');
+  requestAnimationFrame(()=>{
+    tourScroll(s);
+    setTimeout(()=>{
+      if(T.i!==i) return;
+      tip.classList.remove('swap');
+      const f = s.input ? $('f-amt') : (s.act ? [].concat(s.el())[0] : nx);
+      if(f) f.focus({preventScroll:true});
+    }, reduceMo() ? 30 : 480);
+  });
+}
+function tourRect(s){
+  const els=[].concat(s.el()).filter(Boolean); if(!els.length) return null;
+  let t=1e9,l=1e9,b=-1e9,r=-1e9;
+  els.forEach(e=>{ const q=e.getBoundingClientRect(); t=Math.min(t,q.top); l=Math.min(l,q.left); b=Math.max(b,q.bottom); r=Math.max(r,q.right); });
+  const P=s.act?6:8; return {t:t-P, l:l-P, b:b+P, r:r+P};
+}
+function tourScroll(s){
+  const q=tourRect(s); if(!q) return;
+  const vh=window.visualViewport ? visualViewport.height : innerHeight;
+  const h=q.b-q.t, th=$('tourTip').offsetHeight||180;
+  const off = h+th+56 < vh ? Math.max(12,(vh-(h+th+56))/2) : 16;
+  window.scrollTo({top:Math.max(0, scrollY+q.t-off), behavior: reduceMo() ? 'auto' : 'smooth'});
+}
+function tourPlace(){
+  const s=TOUR[T.i]; if(!s || s.center) return;
+  const q=tourRect(s); if(!q) return;
+  const vv=window.visualViewport, vt=vv?vv.offsetTop:0, vh=vv?vv.height:innerHeight;
+  const vw=document.documentElement.clientWidth, H=innerHeight;
+  const tip=$('tourTip'), th=tip.offsetHeight, tw=tip.offsetWidth;
+  const key=[q.t,q.l,q.b,q.r,vt,vh,vw,th].map(Math.round).join();
+  if(key===T.last) return; T.last=key;
+  Object.assign($('tourRing').style,{top:q.t+'px',left:q.l+'px',width:(q.r-q.l)+'px',height:(q.b-q.t)+'px'});
+  const bl=[[0,0,vw,Math.max(0,q.t)],[0,q.b,vw,Math.max(0,H-q.b)],[0,q.t,Math.max(0,q.l),q.b-q.t],[q.r,q.t,Math.max(0,vw-q.r),q.b-q.t]];
+  ['tb1','tb2','tb3','tb4'].forEach((id,k)=>{ const [x,y,w,h]=bl[k]; Object.assign($(id).style,{left:x+'px',top:y+'px',width:w+'px',height:h+'px'}); });
+  const G=50; let top, place;
+  if(vt+vh-q.b >= th+G+8){ place='below'; top=q.b+G; }
+  else if(q.t-vt >= th+G+8){ place='above'; top=q.t-G-th; }
+  else { place='over'; top = (q.t+q.b)/2 > vt+vh/2 ? vt+10 : vt+vh-th-10; }
+  const cx=Math.min(Math.max((q.l+q.r)/2,28),vw-28);
+  tip.style.top=top+'px'; tip.style.left=Math.min(Math.max(cx-tw/2,12),Math.max(12,vw-tw-12))+'px';
+  const ar=$('tourArrow');
+  ar.classList.toggle('off', place==='over');
+  ar.classList.toggle('up', place==='below');
+  ar.style.left=(cx-18)+'px'; ar.style.top=(place==='below' ? q.b+7 : q.t-43)+'px';
+}
+function tourEvt(kind, v){
+  if(!T.on || !T.ui) return;
+  const s=TOUR[T.i];
+  if(kind==='type' && s.wait==='type-'+v) tourGo(T.i+1);
+  else if(kind==='add'){
+    if(v.type==='in' && (s.id==='inAmt'||s.id==='inAdd')) tourGo(tIdx('split'));
+    else if(v.type==='out' && (s.id==='outAmt'||s.id==='outAdd')){ T.spentB=v.bucket; tourGo(tIdx('spent')); }
+  }
+}
+function tourNudge(){ const t=$('tourTip'); t.classList.remove('nudge'); void t.offsetWidth; t.classList.add('nudge'); }
+$('tourNext').onclick = () => {
+  const s=TOUR[T.i];
+  if(s.id==='welcome') return tourStart();
+  if(s.id==='end'){ const a=T.endMain; tourClose(); if(a) a(); return; }
+  if(s.input && !amtOk()){ $('f-amt').focus(); return; }
+  if(T.i===NSTEPS) return tourGo(tIdx('end'));
+  tourGo(T.i+1);
+};
+$('tourDo').onclick = () => {
+  const s=TOUR[T.i];
+  if(s.id==='welcome'){ tourSet('later'); return tourClose(); }
+  if(s.id==='end'){ const a=T.endAlt; tourClose(); if(a) a(); return; }
+  if(s.input){ $('f-amt').value=s.fill; if(s.enter) s.enter(); return tourGo(T.i+1); }
+  if(s.submit){ if(!amtOk()) $('f-amt').value=s.fill; $('f-submit').click(); return; }
+  if(s.doIt && s.doIt()) tourGo(T.i+1);
+};
+$('tourX').onclick = tourExit;
+['tourFull','tourDim','tb1','tb2','tb3','tb4'].forEach(id => $(id).addEventListener('click', tourNudge));
+document.querySelector('.seg').addEventListener('click', e => { const b=e.target.closest('button[data-t]'); if(b) tourEvt('type', b.dataset.t); });
+$('f-amt').addEventListener('input', () => { if(T.ui && TOUR[T.i].input) $('tourNext').disabled = !amtOk(); });
+document.addEventListener('keydown', e => {
+  if(e.key!=='Escape' || !T.ui) return;
+  if(TOUR[T.i].id==='welcome'){ tourSet('later'); tourClose(); } else tourExit();
+});
+// Primera vez: se ofrece el recorrido después de la animación de entrada.
+function tourMaybe(){
+  if(T.asked || !state.loaded) return; T.asked=true;
+  if(realMovs.length || tourFlag) return;
+  let n=0;
+  (function wait(){
+    const it=document.querySelector('.intro');
+    if(it && getComputedStyle(it).display!=='none' && n++<40){ setTimeout(wait, 250); return; }
+    setTimeout(()=>{ if(!realMovs.length && !T.ui && $('help').hidden && $('wiz').hidden){ tourOpenUI(); tourGo(0); } }, 300);
+  })();
+}
 
 // ---------- arranque ----------
 $('f-date').value = today();
