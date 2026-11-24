@@ -530,9 +530,23 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
 /* ---- comprobante compartido desde otra app ---- */
 .shbox .row h2{font-size:1.05rem}
 .shbox .wiz-x{flex:none}
+.sh-st{display:flex;gap:10px;align-items:flex-start;font-size:.9rem;color:var(--muted)}
+.sh-st .spin{flex:none;width:16px;height:16px;margin-top:2px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--accent);animation:ipspin .8s linear infinite}
+.sh-st.ok{color:var(--good);font-weight:700}
+.sh-st.warn{color:var(--fg)}
+.sh-sum{display:grid;gap:2px}
+.sh-sum b{font-family:var(--f-display);font-size:1.9rem;font-weight:800;letter-spacing:-.01em;line-height:1.1}
+.sh-sum span{font-weight:600;overflow-wrap:anywhere}
+.sh-sum small{color:var(--muted);font-size:.82rem}
+.sh-q{display:grid;gap:8px}
+.sh-q p{margin:0;font-weight:600}
+.sh-q .chips button{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;font-size:.92rem}
+.sh-q .chips button i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.sh-acts{display:flex;gap:8px;flex-wrap:wrap}
+.sh-link{border:0;background:none;padding:4px 0;color:var(--muted);font-size:.85rem;font-weight:600;text-decoration:underline;text-underline-offset:3px;justify-self:start}
 .shimg{display:block;width:100%;border:0;padding:0;background:var(--surface-2);border-radius:12px;overflow:hidden;cursor:zoom-in}
-.shimg img{display:block;width:100%;height:26vh;object-fit:cover;object-position:top}
-.shimg::after{content:"Tocá para verlo entero";display:block;padding:6px;font-size:.75rem;font-weight:600;color:var(--muted);text-align:center}
+.shimg img{display:block;width:100%;height:18vh;object-fit:cover;object-position:top}
+.shimg::after{content:"Tocá para ver el comprobante entero";display:block;padding:6px;font-size:.75rem;font-weight:600;color:var(--muted);text-align:center}
 .shimg.big{cursor:zoom-out}.shimg.big img{height:auto;object-fit:contain}.shimg.big::after{content:"Tocá para achicarlo"}
 </style>
 <style>
@@ -806,9 +820,13 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
   <div class="cols">
     <div style="display:grid;gap:20px;min-width:0">
       <section class="panel shbox" id="shBox" data-tab="anotar" hidden aria-labelledby="h-sh">
-        <div class="row"><h2 id="h-sh">Comprobante compartido</h2><button class="wiz-x" type="button" id="shClose" aria-label="Quitar el comprobante">✕</button></div>
-        <p class="hint" id="shMsg" style="margin:0;font-size:.88rem"></p>
-        <button type="button" class="shimg" id="shImgBtn" aria-label="Agrandar el comprobante" hidden><img id="shImg" alt="Comprobante compartido"></button>
+        <div class="row"><h2 id="h-sh">Comprobante compartido</h2><button class="wiz-x" type="button" id="shClose" aria-label="Cerrar el comprobante">✕</button></div>
+        <div class="sh-st" id="shSt" role="status" aria-live="polite"></div>
+        <div class="sh-sum" id="shSum" hidden><b class="num" id="shAmt"></b><span id="shWho"></span><small id="shDate"></small></div>
+        <div class="sh-q" id="shQ" hidden><p id="shQt">¿De qué sobre es?</p><div class="chips" id="shChips"></div></div>
+        <div class="sh-acts" id="shActs" hidden><button class="btn ghost small" type="button" id="shChange">Cambiar sobre</button><button class="btn ghost small" type="button" id="shUndo">Deshacer</button></div>
+        <button type="button" class="sh-link" id="shManual" hidden>El monto está mal: corregirlo a mano</button>
+        <button type="button" class="shimg" id="shImgBtn" aria-label="Ver el comprobante entero" hidden><img id="shImg" alt="Comprobante compartido"></button>
       </section>
       <form class="panel" id="form" data-tab="anotar" autocomplete="off">
         <div class="row" style="flex-wrap:wrap"><h2>Anotar</h2><button class="btn ghost small ipmini" type="button" id="ipOpen2"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>Importar resumen</button></div>
@@ -909,7 +927,7 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
 </nav>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.20</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.21</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
@@ -1241,7 +1259,7 @@ $('form').addEventListener('submit', async e=>{
     $('f-amt').value=''; $('f-note').value='';
     if(!m.date.startsWith(state.month)){ state.month=m.date.slice(0,7); draw(); }
     msg.className='ok'; msg.textContent = (m.type==='in'?'Ingreso':'Gasto')+' de '+money(amount)+' anotado.';
-    if(!$('shBox').hidden) shClose();
+    if(!$('shBox').hidden && SH.state==='manual') shClose();
   }catch(err){ msg.className='hint'; msg.textContent='No se pudo guardar. Probá de nuevo en un momento.'; }
 });
 
@@ -2074,24 +2092,110 @@ document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('imp').hid
 
 
 // ---------- comprobante compartido desde otra app (Compartir → Rinde) ----------
-function shParse(text){
-  const L = String(text||'').split(/\n+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
-  let amount = null, date = null, who = '';
-  for(let i=0;i<L.length && amount==null;i++) if(/transfer|enviaste|pagaste|monto|importe|total|pago/i.test(L[i]))
-    for(const x of [L[i], L[i+1]||'']){ const a = IPX.amounts(x).filter(a=>a.v>0 && a.cur!=='USD'); if(a.length){ amount=a[0].v; break; } }
-  if(amount==null){ const a = L.flatMap(x=>IPX.amounts(x)).filter(a=>a.v>0 && a.cur!=='USD'); if(a.length) amount = Math.max(...a.map(a=>a.v)); }
-  for(const x of L){ const d = IPX.datesIn(x,'dmy')[0]; if(d){ date = d.y+'-'+pad(d.m)+'-'+pad(d.d); break; } }
-  for(let i=0;i<L.length && !who;i++){
-    let m = /^(?:para|destinatario|beneficiario|a nombre de|le transferiste a|enviaste a|cuenta destino|cuenta de destino)\s*:?\s*(.*)$/i.exec(L[i]);
-    if(m) who = (m[1] || L[i+1] || '').trim();
-    else if((m = /transferiste.*?\s+a\s+([A-Za-zÁÉÍÓÚÑáéíóúñ][^$\d]{1,40})$/i.exec(L[i]))) who = m[1].trim();
-    who = who.replace(/^(NX|MP|N X)\s+/,'');
-    if(/^\d[\d\s-]{6,}$/.test(who)) who='';
-  }
-  who = who.replace(/\s*(cvu|cbu|alias|cuit|cuil)\b.*$/i,'').slice(0,40);
-  return {amount, date, note: who ? 'Transferencia a '+IPX.pretty(who) : (amount ? 'Transferencia' : ''), who};
+// Lee el comprobante en el celular (PDF, texto o imagen con reconocimiento de texto) y anota el gasto solo.
+const SH = {state:'', f:null, mov:null, url:''};
+const OCR_BASE = (() => { try{ return new URL('vendor/ocr/', document.baseURI).href; }catch(e){ return 'vendor/ocr/'; } })();
+let ocrWorker = null;
+function shScript(src){ return new Promise((ok, ko) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = ko; document.head.append(s); }); }
+async function shOcr(file){
+  if(!window.Tesseract) await shScript(OCR_BASE+'tesseract.min.js');
+  if(!ocrWorker) ocrWorker = await Tesseract.createWorker('spa', 1, {workerPath: OCR_BASE+'worker.min.js', corePath: OCR_BASE+'core', langPath: OCR_BASE+'lang', gzip: true, workerBlobURL: false});
+  const {data} = await ocrWorker.recognize(file);
+  try{ localStorage.setItem('rinde.ocr.listo','1'); }catch(e){}
+  return data.text || '';
 }
-function shClose(){ $('shBox').hidden = true; const i=$('shImg'); if(i.src){ try{ URL.revokeObjectURL(i.src); }catch(e){} i.removeAttribute('src'); } }
+function shParse(text){
+  const clean = String(text||'').replace(/[°º"`´'’]+/g,' ').replace(/(^|\s)[Ss§5]\s?(?=\d{1,3}(?:\.\d{3})+(?!\d))/gm, '$1$ ');
+  const L = clean.split(/\n+/).map(x=>x.replace(/[|»«©®]+/g,' ').replace(/\s+/g,' ').trim()).filter(Boolean);
+  let amount = null, date = null, who = '';
+  const kind = /recibiste|te (transfiri|envi)|ingres[oó] a tu cuenta|acreditamos/i.test(clean) && !/enviaste|transferiste|pagaste/i.test(clean) ? 'in' : 'out';
+  for(let i=0;i<L.length && amount==null;i++) if(/transfer|enviaste|pagaste|recibiste|monto|importe|total|pago/i.test(L[i]))
+    for(const x of [L[i], L[i+1]||'', L[i+2]||'', L[i+3]||'']){ const a = IPX.amounts(x).filter(a=>a.v>0 && a.cur!=='USD'); if(a.length){ amount=a[0].v; break; } const m = /^\$?\s?(\d{1,3}(?:\.\d{3})+)(?:,(\d{2}))?$/.exec(x); if(m){ amount = Number(m[1].replace(/\./g,'')+(m[2]?'.'+m[2]:'')); break; } }
+  if(amount==null){ const a = L.flatMap(x=>IPX.amounts(x)).filter(a=>a.v>0 && a.cur!=='USD'); if(a.length) amount = Math.max(...a.map(a=>a.v)); }
+  for(const x of L){ const d = IPX.datesIn(x,'dmy')[0]; if(d && d.y>2000){ date = d.y+'-'+pad(d.m)+'-'+pad(d.d); break; } }
+  const nameAt = j => {
+    for(let k=j; k<Math.min(L.length, j+4); k++){
+      let n = L[k].replace(/^[^A-Za-zÁÉÍÓÚÑáéíóúñ]+/,'').replace(/^[B-DF-HJ-NP-TV-Z]{1,3}\s+(?=[A-ZÁÉÍÓÚÑ])/,'').trim();
+      if(!n || /\d/.test(n) || /^(cbu|cvu|cuil|cuit|alias|naranja ?x|mercado ?pago|banco|cuenta|ual[aá]|brubank|lemon|personal pay|modo)\b/i.test(n) || n.split(' ').length<2) continue;
+      return n.replace(/\s*(cvu|cbu|alias|cuit|cuil)\b.*$/i,'').slice(0,40);
+    }
+    return '';
+  };
+  for(let i=0;i<L.length && !who;i++){
+    let m;
+    if((m = /^(?:para|destinatario|beneficiario|a nombre de|le transferiste a|enviaste a|cuenta destino|cuenta de destino|de)\s*:?\s*(.*)$/i.exec(L[i])) && (kind==='out' ? !/^de\b/i.test(L[i]) : true)) who = m[1] && !/\d/.test(m[1]) && m[1].split(' ').length>=2 ? m[1].slice(0,40) : nameAt(i+1);
+    else if((m = /transferiste.*?\s+a\s+([A-Za-zÁÉÍÓÚÑáéíóúñ][^$\d]{1,40})$/i.exec(L[i]))) who = m[1].trim();
+  }
+  return {amount, date, who, kind};
+}
+function shBucketName(id){ const b = state.buckets.find(x=>x.id===id); return b ? b.name : 'Sin sobre'; }
+function shKey(who){ const k = IPX.keys(who).k2; return k ? 'tr:'+k : ''; }
+function shShow(o){
+  $('shSt').className = 'sh-st'+(o.cls?' '+o.cls:''); $('shSt').replaceChildren();
+  if(o.busy) $('shSt').append(el('span',{class:'spin','aria-hidden':'true'}));
+  if(o.st) $('shSt').append(el('span',{text:o.st}));
+  $('shQ').hidden = !o.ask; $('shActs').hidden = !o.acts; $('shManual').hidden = !o.manual;
+}
+function shSummary(){
+  const f = SH.f;
+  $('shSum').hidden = !(f && f.amount);
+  if(!f || !f.amount) return;
+  $('shAmt').textContent = money(f.amount);
+  $('shWho').textContent = f.kind==='in' ? (f.who ? 'De '+IPX.pretty(f.who) : 'Ingreso') : (f.who ? 'Para '+IPX.pretty(f.who) : 'Transferencia');
+  $('shDate').textContent = new Date((f.date||today())+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long', day:'numeric', month:'long'});
+}
+function shChips(onPick, sel){
+  const c = $('shChips'); c.replaceChildren();
+  state.buckets.forEach(b => { const x = el('button',{type:'button', style:'--c:'+b.color, 'aria-pressed': String(b.id===sel)},[el('i'), b.name]); x.onclick = () => onPick(b.id); c.append(x); });
+}
+async function shAdd(bucket){
+  const f = SH.f, note = (f.kind==='in' ? (f.who ? 'Transferencia de '+IPX.pretty(f.who) : 'Transferencia recibida') : (f.who ? 'Transferencia a '+IPX.pretty(f.who) : 'Transferencia')).slice(0,80);
+  const m = {type:f.kind, amount:f.amount, note, date:f.date||today(), createdAt:Date.now(), imp:SH.fp};
+  if(f.kind==='out') m.bucket = bucket;
+  await store.add(m);
+  SH.mov = m; SH.state = 'done';
+  if(f.kind==='out'){ const k = shKey(f.who); if(k){ const r = ipRules(); r[k] = bucket; LS.set('rinde.imp.reglas', r); } }
+  if(!m.date.startsWith(state.month)){ state.month = m.date.slice(0,7); }
+  draw();
+  shShow({st: '✓ Anotado'+(f.kind==='in' ? ' como ingreso' : ' en '+shBucketName(bucket)), cls:'ok', acts:true});
+  $('shChange').hidden = f.kind==='in';
+}
+function shFindMov(){ return SH.mov && state.movs.find(x => x.imp===SH.fp && x.createdAt===SH.mov.createdAt); }
+async function shUndo(){
+  const m = shFindMov();
+  try{ if(m) await store.del(m.id); }catch(e){}
+  SH.mov = null; SH.state = 'undone'; draw();
+  shShow({st:'Listo, no quedó anotado.', cls:'warn', manual:false});
+  setTimeout(() => { if(SH.state==='undone') shClose(); }, 2200);
+}
+function shAsk(){
+  SH.state = 'ask';
+  const f = SH.f;
+  if(f.kind==='in'){
+    $('shQt').textContent = '¿Lo anotamos como ingreso? Se reparte entre tus sobres.';
+    const c = $('shChips'); c.replaceChildren(); const x = el('button',{type:'button','aria-pressed':'true'},['Sí, anotar ingreso']); x.onclick = () => shAdd(null); c.append(x);
+  } else {
+    $('shQt').textContent = '¿De qué sobre es? Tocá uno y queda anotado.';
+    shChips(id => shAdd(id));
+  }
+  shShow({st:'', ask:true, manual:true});
+}
+function shManual(){
+  const f = SH.f || {};
+  const m = shFindMov(); if(m){ store.del(m.id).catch(()=>{}); }
+  SH.state = 'manual'; SH.mov = null;
+  setType(f.kind==='in' ? 'in' : 'out');
+  if(f.amount) $('f-amt').value = f.amount.toLocaleString('es-AR', {maximumFractionDigits:2});
+  $('f-note').value = f.who ? ((f.kind==='in' ? 'Transferencia de ' : 'Transferencia a ')+IPX.pretty(f.who)).slice(0,80) : 'Transferencia';
+  $('f-date').value = f.date || today();
+  $('shSum').hidden = true;
+  shShow({st:'Corregí lo que haga falta abajo y tocá Agregar. El comprobante queda acá para que lo mires.', cls:'warn'});
+  setTimeout(() => { $('f-amt').focus({preventScroll:true}); $('f-amt').select(); $('form').scrollIntoView({block:'start', behavior: reduceMo() ? 'auto' : 'smooth'}); }, 200);
+}
+function shClose(){
+  $('shBox').hidden = true; SH.state = '';
+  if(SH.url){ try{ URL.revokeObjectURL(SH.url); }catch(e){} SH.url=''; $('shImg').removeAttribute('src'); }
+}
 async function shCheck(){
   if(!/[?&]compartido=1/.test(location.search)) return;
   try{ history.replaceState(history.state, '', location.pathname); }catch(e){}
@@ -2104,28 +2208,36 @@ async function shCheck(){
     await caches.delete('rinde-share');
   }catch(e){}
   if(!file && !text) return;
-  setType('out'); showTab('anotar', {hist:false, scroll:false});
-  $('shBox').hidden = false;
+  showTab('anotar', {hist:false, scroll:false}); window.scrollTo(0,0);
+  $('shBox').hidden = false; $('shSum').hidden = true; SH.f = null; SH.mov = null; SH.state = 'reading';
   const isImg = file && /^image\//.test(file.type);
   $('shImgBtn').hidden = !isImg; $('shImgBtn').classList.remove('big');
-  if(isImg) $('shImg').src = URL.createObjectURL(file);
-  $('shMsg').textContent = 'Leyendo el comprobante…';
-  let f = null;
+  if(isImg){ SH.url = URL.createObjectURL(file); $('shImg').src = SH.url; }
+  const first = isImg && !localStorage.getItem('rinde.ocr.listo');
+  shShow({busy:true, st: first ? 'Leyendo el comprobante… La primera vez tarda un poco más porque Rinde prepara el lector (unos 6 MB).' : 'Leyendo el comprobante…'});
+  let txt = text;
   try{
-    if(file && (file.type==='application/pdf' || /\.pdf$/i.test(file.name))) f = shParse((await ipPdfLines(file)).map(l=>l.text).join('\n') + '\n' + text);
-    else if(text) f = shParse(text);
-  }catch(e){}
-  if(f && f.amount) $('f-amt').value = f.amount.toLocaleString('es-AR', {maximumFractionDigits:2});
-  if(f && f.note) $('f-note').value = f.note.slice(0,80);
-  if(f && f.date) $('f-date').value = f.date;
-  if(f && f.who){ const b = IPX.suggest(f.who, 'gasto', state.buckets, ipRules()); if(b) $('f-bucket').value = b; }
-  $('shMsg').textContent = f && f.amount
-    ? 'Ya completamos el monto y el detalle. Revisalos, elegí el sobre y tocá Agregar gasto.'
-    : 'Mirá el monto en el comprobante, escribilo abajo, elegí el sobre y tocá Agregar gasto.';
-  window.scrollTo(0,0);
-  if(!(f && f.amount)) setTimeout(() => $('f-amt').focus({preventScroll:true}), 350);
+    if(file && (file.type==='application/pdf' || /\.pdf$/i.test(file.name))) txt = (await ipPdfLines(file)).map(l=>l.text).join('\n')+'\n'+text;
+    else if(isImg) txt = (await shOcr(file))+'\n'+text;
+  }catch(e){ txt = text; }
+  const f = shParse(txt); SH.f = f;
+  if(!f.amount){ SH.f = f; shManual(); shShow({st: isImg && !navigator.onLine && first ? 'Para leer comprobantes la primera vez necesitás internet. Escribí el monto abajo.' : 'No pudimos leer el monto. Escribilo abajo, elegí el sobre y tocá Agregar gasto.', cls:'warn'}); return; }
+  SH.fp = ['sh', f.date||'', Math.round(f.amount*100), IPX.keys(f.who).k2].join('|');
+  shSummary();
+  const dup = state.movs.find(m => m.imp===SH.fp);
+  if(dup){ SH.state='dup'; shShow({st:'Este comprobante ya está anotado'+(dup.type==='out' ? ' en '+shBucketName(dup.bucket) : '')+'.', cls:'warn'}); return; }
+  const k = shKey(f.who), known = f.kind==='out' && k ? ipRules()[k] : null;
+  if(known && state.buckets.some(b=>b.id===known)) await shAdd(known);
+  else shAsk();
 }
 $('shClose').onclick = shClose;
+$('shUndo').onclick = shUndo;
+$('shManual').onclick = shManual;
+$('shChange').onclick = () => {
+  $('shQt').textContent = '¿A qué sobre lo pasamos?';
+  shChips(async id => { const m = shFindMov(); try{ if(m) await store.del(m.id); }catch(e){} await shAdd(id); }, SH.mov && SH.mov.bucket);
+  shShow({st:'', ask:true});
+};
 $('shImgBtn').onclick = () => $('shImgBtn').classList.toggle('big');
 
 // ---------- asistente de porcentajes ----------
