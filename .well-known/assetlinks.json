@@ -10,5 +10,17 @@
     "A2:7C:D2:8A:B3:AC:A6:5A:2D:B4:F5:06:24:F5:91:65:18:9B:DD:DE:4C:AF:43:4E:85:C1:46:DA:9B:89:74:4E"
    ]
   }
+ },
+ {
+  "relation": [
+   "delegate_permission/common.handle_all_urls"
+  ],
+  "target": {
+   "namespace": "android_app",
+   "package_name": "ar.com.hexacode.lumen",
+   "sha256_cert_fingerprints": [
+    "A2:7C:D2:8A:B3:AC:A6:5A:2D:B4:F5:06:24:F5:91:65:18:9B:DD:DE:4C:AF:43:4E:85:C1:46:DA:9B:89:74:4E"
+   ]
+  }
  }
 ]
