@@ -467,7 +467,7 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
 .tour-b,.tour-full{position:fixed;pointer-events:auto;touch-action:none}
 html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:none}
 .tour-dim{touch-action:none}
-.tour-skip{position:fixed;left:50%;bottom:calc(var(--tabh,0px) + 14px + env(safe-area-inset-bottom,0px));translate:-50% 0;pointer-events:auto;min-height:46px;padding:10px 24px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.5);color:#fff;font:700 .98rem var(--f-body);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);white-space:nowrap}
+.tour-skip{position:fixed;left:50%;bottom:calc(var(--tabh,0px) + 14px);translate:-50% 0;pointer-events:auto;min-height:46px;padding:10px 24px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.5);color:#fff;font:700 .98rem var(--f-body);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);white-space:nowrap}
 .tour-skip:hover{background:rgba(0,0,0,.7)}
 .tour.is-center .tour-skip,.tour.hide-skip .tour-skip{display:none}
 .tour.no-target .tour-dim{display:block}
@@ -532,8 +532,8 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
 .more span{color:var(--muted);font-size:1.4rem;line-height:1}
 @media (min-width:860px){#recentSec{display:none!important}}
 @media (max-width:859px){
-  :root{--tabh:64px}
-  body{padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px))}
+  :root{--tabh0:64px;--tabh:64px}
+  body{padding-bottom:calc(var(--tabh) + 16px)}
   .cols>div{display:contents!important}
   .envsec{order:-1}
   body:not([data-tab]) [data-tab]:not([data-tab="inicio"]),
@@ -542,18 +542,19 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
   body[data-tab="anotar"] [data-tab]:not([data-tab="anotar"]),
   body[data-tab="movs"] [data-tab]:not([data-tab="movs"]),
   body[data-tab="mas"] [data-tab]:not([data-tab="mas"]){display:none!important}
-  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;
-    height:calc(var(--tabh) + env(safe-area-inset-bottom,0px));padding:0 max(4px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(4px,env(safe-area-inset-left,0px));
-    background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
-  .tabbar button{border:0;background:transparent;color:var(--muted);height:var(--tabh);display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:3px;font-size:.7rem;font-weight:600;padding:0 2px;min-width:0;-webkit-tap-highlight-color:transparent}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:stretch;
+    min-height:var(--tabh0);padding:0 max(4px,env(safe-area-inset-right,0px)) max(4px,env(safe-area-inset-bottom,0px)) max(4px,env(safe-area-inset-left,0px));
+    background:color-mix(in srgb,var(--surface) 94%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+  .tabbar button{position:relative;border:0;background:transparent;color:var(--muted);min-height:var(--tabh0);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;font-size:11px;line-height:1.15;font-weight:600;padding:8px 2px 6px;min-width:0;-webkit-tap-highlight-color:transparent}
   .tabbar button>span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tabbar svg{width:24px;height:24px;flex:none}
   .tabbar button[aria-current="page"]{color:var(--fg)}
   .tabbar button[aria-current="page"] svg{color:var(--accent)}
-  .tabbar .plus{justify-content:flex-end;padding-bottom:9px}
-  .tabbar .plus .pc{width:54px;height:54px;border-radius:50%;background:var(--ink);color:var(--ink-fg);display:grid;place-items:center;margin-bottom:2px;
-    box-shadow:0 6px 18px rgba(0,0,0,.28);border:3px solid var(--bg);transition:transform .15s}
+  /* botón central: el círculo flota sobre la barra sin empujar nada, así las etiquetas quedan alineadas */
+  .tabbar .plus::before{content:"";display:block;width:24px;height:24px;flex:none}
+  .tabbar .plus .pc{position:absolute;left:50%;top:-22px;width:56px;height:56px;margin-left:-28px;flex:none;border-radius:50%;background:var(--ink);color:var(--ink-fg);
+    display:grid;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.3);border:4px solid var(--bg);transition:transform .15s}
   .tabbar .plus .pc svg{color:inherit!important;width:26px;height:26px}
   .tabbar .plus[aria-current="page"] .pc{background:var(--accent);color:#1d1a12}
   .tabbar .plus:active .pc{transform:scale(.94)}
@@ -582,6 +583,21 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
 .pg-m{font-size:.78rem;color:var(--muted);font-weight:600}
 .pg-col.cur .pg-m{color:var(--fg)}
 .pg-note{margin:0;font-size:.8rem;color:var(--muted)}
+.pg-tools{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pg-lbl{font-size:.85rem;color:var(--muted);font-weight:600}
+.pg-mode{display:inline-flex;padding:3px;border-radius:999px;background:var(--surface-2);gap:2px}
+.pg-mode button{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--muted);font:600 .82rem var(--f-body);padding:6px 12px;border-radius:999px;min-height:36px}
+.pg-mode button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.pg-mode svg{width:16px;height:16px}
+.pg-chart.pg-line{grid-template-columns:minmax(0,1fr);gap:6px}
+.pg-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));justify-items:center}
+.pg-plot{position:relative;height:120px}
+.pg-plot svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.pg-dot{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#2f7d6d;border:2px solid var(--surface);box-shadow:0 0 0 1.5px #2f7d6d}
+.pg-dot.neg{background:var(--bad);box-shadow:0 0 0 1.5px var(--bad)}
+.pg-dot.cur{background:var(--surface)}
+.pg-row .pg-m.cur{color:var(--fg)}
+
 @media (prefers-reduced-motion:no-preference){.pg-bar{transition:top .3s ease,height .3s ease}}
 </style>
 <div class="wrap">
@@ -629,8 +645,14 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
       <div class="sk"><b id="skT">Arrancá tu racha</b><small id="skS"></small></div>
     </div>
     <div class="pg-head"><div class="pg-cap" id="pgCap"></div><div class="pg-big num" id="pgBig"></div><p class="pg-sub" id="pgSub"></p></div>
+    <div class="pg-tools"><span class="pg-lbl">Últimos 6 meses</span>
+      <div class="pg-mode" id="pgMode" role="group" aria-label="Tipo de gráfico">
+        <button type="button" data-mode="bars" aria-pressed="true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4" y="11" width="4" height="9" rx="1.2"/><rect x="10" y="5" width="4" height="15" rx="1.2"/><rect x="16" y="8" width="4" height="12" rx="1.2"/></svg>Barras</button>
+        <button type="button" data-mode="line" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-6 4 3 4-7 5 5"/></svg>Línea</button>
+      </div>
+    </div>
     <div class="pg-chart" id="pgChart" role="img" aria-label="Lo que te quedó cada mes"></div>
-    <p class="pg-note">Barras: lo que te quedó cada mes (lo que cobraste menos lo que gastaste).</p>
+    <p class="pg-note">Lo que te quedó cada mes (lo que cobraste menos lo que gastaste).</p>
   </section>
 
   <section class="panel" id="recentSec" data-tab="inicio" aria-labelledby="h-recent">
@@ -732,7 +754,7 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
 </nav>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.17</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.18</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
@@ -992,7 +1014,29 @@ function drawExtra(ms, bmap){
   const maxP=Math.max(0,...data.map(d=>d.s)), maxN=Math.max(0,...data.map(d=>-d.s)), tot=(maxP+maxN)||1, H=120;
   const zero = maxN===0 ? H : maxP/tot*H;
   const ch=$('pgChart'); ch.replaceChildren();
-  data.forEach(d=>{
+  const mode = LS.get('rinde.chart') === 'line' ? 'line' : 'bars';
+  ch.classList.toggle('pg-line', mode==='line');
+  document.querySelectorAll('#pgMode [data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode===mode)));
+  if(mode==='line'){
+    // línea: un punto por mes con datos; el mes en curso va punteado porque todavía no terminó
+    const T=8, R=104, z = T + (maxN===0 ? R : maxP/tot*R), yOf = s => z - s/tot*R, xOf = i => (i+.5)/6*600;
+    const pts = data.map((d,i) => d.has ? {i, x:xOf(i), y:yOf(d.s), d} : null);
+    let lines='', areas='', dots='';
+    const runs=[]; let run=[];
+    pts.forEach(p => { if(p) run.push(p); else { if(run.length) runs.push(run); run=[]; } }); if(run.length) runs.push(run);
+    runs.forEach(r => {
+      if(r.length<2) return;
+      const last=r[r.length-1], solid = last.d.cur ? r.slice(0,-1) : r;
+      areas += `<path d="M${r[0].x} ${z} ${r.map(p=>`L${p.x} ${p.y}`).join(' ')} L${last.x} ${z} Z" fill="url(#pgA)"/>`;
+      if(solid.length>1) lines += `<path d="M${solid.map(p=>`${p.x} ${p.y}`).join(' L')}" style="stroke:#2f7d6d" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
+      if(last.d.cur){ const prev=r[r.length-2]; lines += `<path d="M${prev.x} ${prev.y} L${last.x} ${last.y}" style="stroke:#2f7d6d" stroke-width="3" stroke-dasharray="6 6" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`; }
+    });
+    pts.forEach(p => { if(p) dots += `<i class="pg-dot${p.d.s<0?' neg':''}${p.d.cur?' cur':''}" style="left:${(p.i+.5)/6*100}%;top:${p.y}px"></i>`; });
+    ch.innerHTML = `<div class="pg-row">${data.map(d=>`<div class="pg-v num">${d.has?compact(d.s):'—'}</div>`).join('')}</div>
+      <div class="pg-plot"><svg viewBox="0 0 600 120" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="pgA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f7d6d" stop-opacity=".35"/><stop offset="1" stop-color="#2f7d6d" stop-opacity="0"/></linearGradient></defs>
+        <line x1="0" x2="600" y1="${z}" y2="${z}" style="stroke:var(--line)" stroke-width="1" vector-effect="non-scaling-stroke"/>${areas}${lines}</svg>${dots}</div>
+      <div class="pg-row">${data.map(d=>`<div class="pg-m${d.cur?' cur':''}">${mName(d.ym,'short')}</div>`).join('')}</div>`;
+  } else data.forEach(d=>{
     const area = el('div',{class:'pg-area'},[el('i',{class:'pg-zero',style:'top:'+zero+'px'})]);
     if(d.has && d.s!==0){ const h=Math.max(4, Math.abs(d.s)/tot*H); area.append(el('i',{class:'pg-bar'+(d.s<0?' neg':''), style: d.s>0 ? `top:${zero-h}px;height:${h}px` : `top:${zero}px;height:${h}px`})); }
     ch.append(el('div',{class:'pg-col'+(d.cur?' cur':'')},[el('div',{class:'pg-v num',text: d.has ? compact(d.s) : '—'}), area, el('div',{class:'pg-m',text: mName(d.ym,'short')})]));
@@ -1314,6 +1358,8 @@ const TABS = ['inicio','sobres','anotar','movs','mas'];
 const mqTabs = matchMedia('(max-width:859px)');
 const tabsOn = () => mqTabs.matches;
 const tabH = () => tabsOn() ? ($('tabbar').offsetHeight||0) : 0;
+if(window.ResizeObserver){ const setTabH = () => document.documentElement.style.setProperty('--tabh', (tabsOn() ? ($('tabbar').offsetHeight||64) : 0)+'px'); new ResizeObserver(setTabH).observe($('tabbar')); mqTabs.addEventListener && mqTabs.addEventListener('change', setTabH); }
+$('pgMode').addEventListener('click', e => { const b=e.target.closest('[data-mode]'); if(!b) return; LS.set('rinde.chart', b.dataset.mode); draw(); });
 const inFrame = (() => { try{ return window.top !== window.self; }catch(e){ return true; } })();
 let curTab = 'inicio';
 function showTab(t, o={}){
