@@ -1,0 +1,1051 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050507">
+<meta name="description" content="Lumen: tu galería de fotos y videos, guardada solo en tu celular.">
+<title>Lumen</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: nocturna y cálida, como mirar fotos con la luz apagada.
+IDEA: una fototeca que se ordena sola en carruseles, con controles de vidrio flotando sobre las imágenes.
+PICTURE: las propias fotos llenan todo; el vidrio deja ver los colores de abajo.
+COLOUR and TYPE: negro profundo, vidrio translúcido, luz ámbar→coral→violeta; Figtree.
+LAYOUT: encabezado fijo, carruseles horizontales, barra de vidrio flotante abajo.
+*/
+:root{--bg:#050507;--s1:#111117;--s2:#1a1a21;--s3:#25252e;--fg:#f7f7fa;--mu:#a6a6b4;--line:rgba(255,255,255,.1);
+  --a1:#ffc46b;--a2:#ff6b6b;--a3:#b45cff;--acc:#ff8a5b;
+  --grad:linear-gradient(135deg,var(--a1),var(--a2) 55%,var(--a3));
+  --f:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);
+  color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;min-width:0}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f);font-size:16px;line-height:1.4}
+body{overflow-x:hidden;min-height:100vh}
+body.lock{overflow:hidden}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+img,video{display:block}
+:focus-visible{outline:2px solid var(--a1);outline-offset:2px}
+svg{flex:none}
+
+/* ---------- vidrio ---------- */
+.glass{background:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,.05) 55%,rgba(255,255,255,.09));
+  -webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);
+  border:1px solid rgba(255,255,255,.17);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 1px rgba(255,255,255,.07),0 12px 34px rgba(0,0,0,.5);isolation:isolate}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;
+  background:radial-gradient(130% 80% at 18% -10%,rgba(255,255,255,.2),transparent 55%)}
+.ib{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none}
+.ib svg{width:22px;height:22px}
+.avatar{background:var(--grad);color:#1d0d12;font-weight:800;font-size:1.1rem}
+.avatar svg{width:22px;height:22px}
+
+/* ---------- encabezado ---------- */
+.top{position:sticky;top:0;z-index:20;padding:calc(var(--st) + 16px) 20px 14px;border-radius:0 0 28px 28px;
+  background:rgba(14,14,19,.66);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);
+  border-bottom:1px solid rgba(255,255,255,.08);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.top .row{display:flex;align-items:center;gap:10px;max-width:1100px;margin:0 auto}
+.top h1{flex:1;margin:0;font-size:1.75rem;font-weight:800;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{max-width:1100px;margin:0 auto}
+.chips{display:flex;gap:8px;margin:14px -20px 0;padding:0 20px;overflow-x:auto;scrollbar-width:none;align-items:center}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:38px;padding:0 18px;border-radius:999px;background:rgba(255,255,255,.09);font-weight:600;font-size:.95rem;white-space:nowrap}
+.chip[aria-pressed="true"]{background:#fff;color:#0b0b0f}
+.chip.sel{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,.25)}
+.search{position:relative;margin-top:14px}
+.search svg{position:absolute;left:16px;top:50%;translate:0 -50%;width:20px;height:20px;color:var(--mu);pointer-events:none}
+.search input{width:100%;height:50px;border-radius:25px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.08);padding:0 18px 0 46px;font-size:1rem;outline:none}
+.search input:focus{border-color:rgba(255,255,255,.35)}
+
+/* ---------- contenido ---------- */
+main{max-width:1100px;margin:0 auto;padding:6px 20px calc(130px + var(--sb))}
+body.mini-on main{padding-bottom:calc(210px + var(--sb))}
+.sec{margin-top:30px}
+.hrow{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px}
+.hrow h2,.sec>h2{margin:0;font-size:1.45rem;font-weight:800;letter-spacing:-.015em}
+.sec>h2{margin-bottom:14px}
+.lnk{color:var(--mu);font-weight:700;font-size:.92rem;white-space:nowrap}
+.lnk:hover{color:var(--fg)}
+.quick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}
+.qt{display:flex;align-items:center;gap:12px;height:60px;border-radius:10px;background:var(--s2);overflow:hidden;text-align:left}
+.qt .qi{width:60px;height:60px;flex:none;object-fit:cover;display:grid;place-items:center;color:#fff}
+.qt .qi svg{width:26px;height:26px}
+.qt b{font-size:.93rem;font-weight:700;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:8px;line-height:1.2}
+.g-fav{background:linear-gradient(135deg,#6b4bff,#c46bff 50%,#ff8fb1)}
+.g-vid{background:linear-gradient(135deg,#ff6b6b,#ffb36b)}
+.rail{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -20px;padding:2px 20px 6px;scrollbar-width:none;scroll-padding-inline:20px}
+.rail::-webkit-scrollbar{display:none}
+.rail>*{scroll-snap-align:start;flex:none}
+.mem{position:relative;width:min(78vw,340px);aspect-ratio:.92;border-radius:22px;overflow:hidden;background:var(--s2);text-align:left;border:1px solid rgba(255,255,255,.12);display:block}
+.mem img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .6s ease}
+.mem:hover img{transform:scale(1.03)}
+.mem::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.25),rgba(0,0,0,0) 30%,rgba(0,0,0,0) 45%,rgba(0,0,0,.8))}
+.mem .mk,.mem .tx{pointer-events:none}
+.mem .mk{position:absolute;top:14px;left:14px;z-index:1;width:30px;height:30px}
+.mem .tx{position:absolute;left:20px;right:84px;bottom:20px;z-index:1}
+.mem .tx b{display:block;font-size:1.55rem;font-weight:800;letter-spacing:-.02em;line-height:1.08;text-wrap:balance}
+.mem .tx span{display:block;margin-top:4px;color:rgba(255,255,255,.78);font-size:.95rem}
+.mem .play{position:absolute;right:16px;bottom:18px;z-index:2;width:54px;height:54px}
+.play svg{width:24px;height:24px;margin-left:3px}
+.card{width:152px;text-align:left;display:block}
+.card .cv{position:relative;width:152px;height:152px;border-radius:16px;overflow:hidden;background:var(--s2)}
+.card.v .cv{height:206px}
+.card .cv img{width:100%;height:100%;object-fit:cover}
+.card b{display:block;margin-top:10px;font-size:1rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card span{color:var(--mu);font-size:.9rem}
+.card .newc{display:grid;place-items:center;height:100%;background:var(--s1);border:1.5px dashed rgba(255,255,255,.2);border-radius:16px;color:var(--mu)}
+.card .newc svg{width:34px;height:34px}
+.badge{position:absolute;right:8px;bottom:8px;padding:3px 9px;border-radius:999px;font-size:.78rem;font-weight:700;display:flex;align-items:center;gap:4px}
+.badge svg{width:12px;height:12px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;border-radius:14px;overflow:hidden}
+@media (min-width:640px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (min-width:960px){.grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.tile{position:relative;aspect-ratio:1;overflow:hidden;background:var(--s2);display:block;width:100%;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.tile img{width:100%;height:100%;object-fit:cover;transition:transform .2s,border-radius .2s;pointer-events:none}
+.tile .vd{position:absolute;right:6px;bottom:6px;font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:999px;background:rgba(0,0,0,.55);display:flex;gap:3px;align-items:center}
+.tile .vd svg{width:10px;height:10px}
+.tile .fv{position:absolute;left:6px;bottom:6px;width:18px;height:18px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.7))}
+.tile .ck{position:absolute;right:7px;top:7px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.3);display:none;place-items:center}
+.tile .ck svg{width:14px;height:14px;opacity:0}
+.selmode .tile .ck{display:grid}
+.tile.on .ck{background:var(--a2);border-color:#fff}
+.tile.on .ck svg{opacity:1}
+.tile.on img{transform:scale(.86);border-radius:10px}
+.tile .nf{position:absolute;inset:0;display:grid;place-items:center;color:var(--mu);font-size:.75rem;font-weight:700}
+.mhead{display:flex;justify-content:space-between;align-items:baseline;margin:26px 2px 10px}
+.mhead h3{margin:0;font-size:1.1rem;font-weight:800}
+.mhead span{color:var(--mu);font-size:.88rem}
+.rows{display:grid;gap:4px}
+.arow{display:flex;align-items:center;gap:14px;padding:8px 0;text-align:left;width:100%}
+.arow .ac{width:64px;height:64px;border-radius:12px;overflow:hidden;flex:none;background:var(--s2);display:grid;place-items:center;color:var(--mu)}
+.arow .ac img{width:100%;height:100%;object-fit:cover}
+.arow b{display:block;font-weight:700;font-size:1.02rem}
+.arow span{color:var(--mu);font-size:.9rem}
+.note{color:var(--mu);margin:26px 2px;line-height:1.5}
+.empty{margin-top:22px;border-radius:28px;padding:30px 24px;position:relative;overflow:hidden;
+  background:radial-gradient(120% 90% at 100% 0%,rgba(180,92,255,.35),transparent 60%),radial-gradient(120% 90% at 0% 100%,rgba(255,138,91,.35),transparent 60%),var(--s1);border:1px solid rgba(255,255,255,.1)}
+.empty .lg{width:72px;height:72px}
+.empty h2{font-size:2rem;line-height:1.05;letter-spacing:-.025em;margin:18px 0 10px;font-weight:800;text-wrap:balance}
+.empty p{color:rgba(255,255,255,.78);margin:0 0 22px;max-width:46ch}
+.btn{height:50px;border-radius:25px;padding:0 22px;font-weight:700;background:#fff;color:#0b0b0f;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
+.btn svg{width:20px;height:20px}
+.btn.ghost{background:rgba(255,255,255,.1);color:var(--fg)}
+.btn.danger{background:#ff5a5f;color:#fff}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.credit{display:flex;align-items:center;justify-content:center;gap:10px;margin:48px 0 0;color:var(--mu);text-decoration:none;opacity:.8}
+.credit:hover{opacity:1;color:var(--fg)}
+.credit svg{width:26px;height:30px;color:var(--a1)}
+.credit b{font-size:1.15rem;color:var(--fg);font-weight:700}
+
+/* ---------- barra de abajo ---------- */
+.nav{position:fixed;left:16px;right:16px;bottom:calc(14px + var(--sb));z-index:30;display:flex;gap:10px;max-width:520px;margin:0 auto}
+.pill{position:relative;flex:1;height:66px;border-radius:33px;display:grid;grid-template-columns:1fr 1fr;padding:5px}
+.pill .bub{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:28px;background:rgba(255,255,255,.14);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 2px 10px rgba(0,0,0,.25);transition:transform .45s cubic-bezier(.3,1.35,.5,1),opacity .25s}
+.pill[data-on="lib"] .bub{transform:translateX(100%)}
+.pill[data-on="search"] .bub{opacity:0}
+.nb{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.76rem;font-weight:600;color:var(--mu);border-radius:28px}
+.nb svg{width:25px;height:25px}
+.nb[aria-current="page"],.sbtn[aria-current="page"]{color:var(--acc)}
+.sbtn{position:relative;width:66px;height:66px;border-radius:50%;flex:none;display:grid;place-items:center;color:var(--mu)}
+.sbtn svg{width:26px;height:26px}
+body.selecting .nav,body.selecting .mini{display:none!important}
+.mini{position:fixed;left:26px;right:26px;max-width:500px;margin:0 auto;bottom:calc(92px + var(--sb));z-index:29;height:64px;border-radius:32px;display:flex;align-items:center;gap:12px;padding:0 8px 0 8px;overflow:hidden}
+.mini .mbg{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(26px) saturate(170%);opacity:.6;z-index:-2}
+.mini .mv{width:48px;height:48px;border-radius:50%;overflow:hidden;flex:none;background:#000}
+.mini .mv video{width:100%;height:100%;object-fit:cover}
+.mini .mt{flex:1;text-align:left;display:grid;min-width:0}
+.mini .mt b{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini .mt small{color:rgba(255,255,255,.75);font-size:.85rem}
+.mini .ib{width:44px;height:44px}
+.selbar{position:fixed;left:16px;right:16px;max-width:560px;margin:0 auto;bottom:calc(14px + var(--sb));z-index:31;min-height:66px;border-radius:33px;display:flex;align-items:center;gap:2px;padding:8px 8px 8px 20px}
+.selbar .st{flex:1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.selbar .ib{width:46px;height:46px}
+.selbar .btn{height:46px;padding:0 16px}
+
+/* ---------- colección (álbum o recuerdo) ---------- */
+.ov{position:fixed;inset:0;z-index:40;background:var(--bg);overflow-y:auto;overscroll-behavior:contain}
+.ch{position:relative;height:min(56vh,440px)}
+.ch img{width:100%;height:100%;object-fit:cover}
+.ch .ph{width:100%;height:100%;background:var(--grad);opacity:.5}
+.ch::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,5,7,.35),rgba(5,5,7,0) 30%,rgba(5,5,7,.2) 60%,var(--bg))}
+.ch .back{position:absolute;top:calc(var(--st) + 14px);left:16px;z-index:2}
+.ch .tx{position:absolute;left:20px;right:20px;bottom:10px;z-index:2;max-width:1100px;margin:0 auto}
+.ch h2{margin:0;font-size:clamp(2rem,9vw,3rem);line-height:1.02;font-weight:800;letter-spacing:-.03em;text-wrap:balance}
+.ch .tx span{color:rgba(255,255,255,.8)}
+.cbar{display:flex;align-items:center;gap:12px;padding:14px 20px 6px;max-width:1100px;margin:0 auto}
+.cbar .gplay{width:58px;height:58px;border-radius:50%;background:var(--grad);color:#1d0d12;display:grid;place-items:center;box-shadow:0 10px 26px rgba(255,107,107,.35)}
+.cbar .gplay svg{width:26px;height:26px;margin-left:3px}
+.cbar .sp{flex:1}
+.ov main{padding-top:10px}
+
+/* ---------- visor ---------- */
+.vw{position:fixed;inset:0;z-index:60;background:#000}
+.vtrack{position:absolute;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior:contain}
+.vtrack::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;display:grid;place-items:center;overflow:hidden;position:relative}
+.slide img,.slide video{max-width:100%;max-height:100%;object-fit:contain;transition:transform .25s ease}
+.slide.v{padding:calc(var(--st) + 74px) 0 calc(var(--sb) + 96px)}
+.slide .err{color:var(--mu);padding:30px;text-align:center}
+.vw.zoom .vtrack{overflow:hidden}
+.vw.zoom .slide img{touch-action:none;cursor:grab}
+.vw.pan .slide img{transition:none}
+.vtop{position:absolute;top:calc(var(--st) + 12px);left:12px;right:12px;display:flex;align-items:center;gap:10px;z-index:2;transition:opacity .25s}
+.vtop .tt{flex:1;text-align:center;display:grid;text-shadow:0 1px 6px rgba(0,0,0,.6)}
+.vtop .tt b{font-size:1rem}
+.vtop .tt small{color:rgba(255,255,255,.75);font-size:.82rem}
+.ib.on{color:#ff6b8b}
+.vbot{position:absolute;left:50%;bottom:calc(var(--sb) + 18px);translate:-50% 0;display:flex;gap:2px;padding:6px;border-radius:999px;z-index:2;transition:opacity .25s}
+.vbot button{position:relative;width:60px;height:52px;border-radius:26px;display:grid;place-items:center}
+.vbot button:hover{background:rgba(255,255,255,.1)}
+.vbot svg{width:23px;height:23px}
+.vprog{position:absolute;top:calc(var(--st) + 66px);left:20px;right:20px;height:3px;border-radius:3px;background:rgba(255,255,255,.22);z-index:2;overflow:hidden;transition:opacity .25s}
+.vprog i{display:block;height:100%;width:0;background:#fff}
+.vw.ui-off .vtop,.vw.ui-off .vbot{opacity:0;pointer-events:none}
+.vw.show .vbot{display:none}
+.paused{position:absolute;left:50%;top:50%;translate:-50% -50%;z-index:2;width:76px;height:76px;pointer-events:none}
+.paused svg{width:30px;height:30px;margin-left:4px}
+
+/* ---------- hojas ---------- */
+.sh{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center}
+.sh .bd{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+.sh .pn{position:relative;width:100%;max-width:560px;max-height:86vh;overflow:auto;border-radius:28px 28px 0 0;padding:10px 20px calc(var(--sb) + 22px);
+  background:rgba(30,30,38,.78);animation:up .28s cubic-bezier(.2,.9,.3,1)}
+@media (min-width:700px){.sh{align-items:center}.sh .pn{border-radius:28px}}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+.grab{width:40px;height:5px;border-radius:3px;background:rgba(255,255,255,.25);margin:4px auto 16px}
+.sh h3{margin:0 0 6px;font-size:1.35rem;font-weight:800;letter-spacing:-.01em}
+.sh p{color:var(--mu);margin:0 0 16px;line-height:1.45}
+.opt{display:flex;align-items:center;gap:14px;width:100%;min-height:58px;padding:6px 2px;text-align:left;font-weight:600;border-bottom:1px solid var(--line)}
+.opt:last-child{border-bottom:0}
+.opt .oi{width:44px;height:44px;border-radius:12px;overflow:hidden;flex:none;display:grid;place-items:center;background:rgba(255,255,255,.08)}
+.opt .oi img{width:100%;height:100%;object-fit:cover}
+.opt .oi svg{width:22px;height:22px}
+.opt small{display:block;color:var(--mu);font-weight:500}
+.opt.danger{color:#ff7b7f}
+.field{width:100%;height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);padding:0 16px;font-size:1rem;outline:none}
+.field:focus{border-color:rgba(255,255,255,.4)}
+.sh .btns{justify-content:flex-end;margin-top:18px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;margin:6px 0 4px}
+.kv dt{color:var(--mu)}
+.kv dd{margin:0;text-align:right;font-weight:600;overflow-wrap:anywhere}
+.prof{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.prof .avatar{width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font-size:1.5rem}
+.toast{position:fixed;bottom:calc(96px + var(--sb));left:50%;translate:-50% 0;z-index:95;padding:12px 20px;border-radius:22px;width:max-content;font-weight:600;max-width:calc(100% - 32px);text-align:center;background:rgba(40,40,50,.7)}
+body.mini-on .toast{bottom:calc(170px + var(--sb))}
+body.selecting .toast{bottom:calc(96px + var(--sb))}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="lumg" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffc46b"/><stop offset=".55" stop-color="#ff6b6b"/><stop offset="1" stop-color="#b45cff"/></linearGradient>
+  <symbol id="lumark" viewBox="0 0 64 64"><circle cx="32" cy="32" r="21" fill="none" stroke="url(#lumg)" stroke-width="9"/><circle cx="41.5" cy="22.5" r="6.5" fill="#fff"/></symbol>
+  <symbol id="lumono" viewBox="0 0 64 64"><circle cx="32" cy="32" r="21" fill="none" stroke="#fff" stroke-width="9"/><circle cx="41.5" cy="22.5" r="6.5" fill="#fff"/></symbol>
+  <g id="mkmono" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><path d="M703 140.5L915.2 263L915.2 508L703 630.5L490.8 508L490.8 263L703 140.5Z"/><path d="M703 243L824.2 313L824.2 453L703 523L581.8 453L581.8 313L703 243Z"/><path d="M490.8 263L581.8 313"/><path d="M915.2 263L824.2 313"/><path d="M490.8 508L581.8 453"/><path d="M915.2 508L824.2 453"/><path d="M703 140.5L703 383"/><path d="M703 523L703 630.5"/><path d="M703 140.5L581.8 313"/><path d="M703 140.5L824.2 313"/><path d="M703 630.5L581.8 453"/><path d="M703 630.5L824.2 453"/><path d="M490.8 508L581.8 313"/><path d="M915.2 508L824.2 313"/><path d="M581.8 453L824.2 313"/><path d="M703 383L824.2 453"/><path d="M703 140.5Q769.8 269.7 915.2 263"/><path d="M915.2 263Q836.7 385.5 915.2 508"/><path d="M915.2 508Q769.8 501.3 703 630.5"/><path d="M703 630.5Q636.2 501.3 490.8 508"/><path d="M490.8 508Q569.3 385.5 490.8 263"/><path d="M490.8 263Q636.2 269.7 703 140.5"/><path d="M585 388A118 78 0 1 0 821 388A118 78 0 1 0 585 388Z"/></g>
+</defs></svg>
+
+<header class="top" id="top">
+  <div class="row">
+    <h1 id="title">¡Hola!</h1>
+    <button class="ib glass" id="addBtn" type="button" aria-label="Agregar fotos y videos"></button>
+    <button class="ib avatar" id="avatar" type="button" aria-label="Tu perfil"></button>
+  </div>
+  <div class="sub" id="sub"></div>
+</header>
+
+<main id="main" aria-live="off"></main>
+
+<nav class="nav" id="nav" aria-label="Secciones">
+  <div class="pill glass" id="pill" data-on="home">
+    <span class="bub" aria-hidden="true"></span>
+    <button class="nb" type="button" data-tab="home" aria-current="page"></button>
+    <button class="nb" type="button" data-tab="lib"></button>
+  </div>
+  <button class="sbtn glass" type="button" data-tab="search" aria-label="Buscar"></button>
+</nav>
+
+<div class="mini glass" id="mini" hidden>
+  <div class="mbg" id="miniBg"></div>
+  <button class="mv" id="miniV" type="button" aria-label="Abrir el video"></button>
+  <button class="mt" id="miniT" type="button"><b id="miniName"></b><small id="miniSub"></small></button>
+  <button class="ib" id="miniPlay" type="button" aria-label="Pausar"></button>
+  <button class="ib" id="miniX" type="button" aria-label="Cerrar el reproductor"></button>
+</div>
+<div class="selbar glass" id="selbar" hidden></div>
+<input type="file" id="pick" accept="image/*,video/*" multiple hidden>
+<div class="toast glass" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(() => {
+'use strict';
+// ---------- utilidades ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const h = html => { const t=document.createElement('template'); t.innerHTML=html.trim(); return t.content.firstElementChild; };
+const cap = s => s ? s.charAt(0).toUpperCase()+s.slice(1) : s;
+const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const pad = n => String(n).padStart(2,'0');
+const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const LS = { get(k,d){ try{ const v=localStorage.getItem(k); return v==null?d:JSON.parse(v); }catch(e){ return d; } }, set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} } };
+const inFrame = (() => { try{ return window.top !== window.self; }catch(e){ return true; } })();
+const mk = (mono) => `<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#${mono?'lumono':'lumark'}"/></svg>`;
+const ic = p => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const icf = p => `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${p}</svg>`;
+const I = {
+  home: icf('<path d="M12 3.2 2.8 11a1 1 0 0 0 1.3 1.5l.9-.8V20a1 1 0 0 0 1 1h4.5v-5.5h3V21H18a1 1 0 0 0 1-1v-8.3l.9.8a1 1 0 0 0 1.3-1.5z"/>'),
+  lib: ic('<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/>'),
+  search: ic('<circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.5-4.5"/>'),
+  plus: ic('<path d="M12 5v14M5 12h14"/>'),
+  user: ic('<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'),
+  heart: ic('<path d="M12 20.5s-8-4.8-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.8-8 10.6-8 10.6Z"/>'),
+  heartF: icf('<path d="M12 20.5s-8-4.8-8-10.6A4.6 4.6 0 0 1 12 7a4.6 4.6 0 0 1 8 2.9c0 5.8-8 10.6-8 10.6Z"/>'),
+  play: icf('<path d="M7 4.5v15a1 1 0 0 0 1.5.9l12-7.5a1 1 0 0 0 0-1.8l-12-7.5A1 1 0 0 0 7 4.5Z"/>'),
+  pause: icf('<rect x="6" y="4.5" width="4" height="15" rx="1.2"/><rect x="14" y="4.5" width="4" height="15" rx="1.2"/>'),
+  next: icf('<path d="M5 5.5v13a1 1 0 0 0 1.5.9l9.5-6.5a1 1 0 0 0 0-1.8L6.5 4.6A1 1 0 0 0 5 5.5Z"/><rect x="17" y="5" width="2.6" height="14" rx="1"/>'),
+  x: ic('<path d="M6 6l12 12M18 6 6 18"/>'),
+  down: ic('<path d="m6 9 6 6 6-6"/>'),
+  back: ic('<path d="m15 5-7 7 7 7"/>'),
+  share: ic('<path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/>'),
+  album: ic('<rect x="3" y="6" width="14" height="14" rx="2.5"/><path d="M7 3h11.5A2.5 2.5 0 0 1 21 5.5V17"/><path d="M10 10v6M7 13h6"/>'),
+  info: ic('<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>'),
+  trash: ic('<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4.5h6V7"/>'),
+  check: ic('<path d="m5 12.5 4.5 4.5L19 7.5" stroke-width="3"/>'),
+  more: icf('<circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>'),
+  cam: ic('<path d="M15.5 10.5 21 7v10l-5.5-3.5"/><rect x="3" y="6" width="12.5" height="12" rx="2.5"/>'),
+  image: ic('<rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/>'),
+  pen: ic('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/>'),
+  sparkle: icf('<path d="M12 2.5c.5 4.6 2.4 6.5 7 7-4.6.5-6.5 2.4-7 7-.5-4.6-2.4-6.5-7-7 4.6-.5 6.5-2.4 7-7Z"/>'),
+};
+const PH = 'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#1a1a21"/></svg>');
+const fmtDate = t => new Date(t).toLocaleDateString('es-AR',{day:'numeric',month:'short',year:'numeric'}).replace('.','');
+const fmtLong = t => new Date(t).toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}) + ', ' + new Date(t).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+const mKey = t => { const d=new Date(t); return d.getFullYear()*12+d.getMonth(); };
+const mLabel = k => cap(new Date(Math.floor(k/12), k%12, 1).toLocaleDateString('es-AR',{month:'long',year:'numeric'}));
+const mName = k => cap(new Date(Math.floor(k/12), k%12, 1).toLocaleDateString('es-AR',{month:'long'}));
+const dur = s => { s=Math.round(s||0); return Math.floor(s/60)+':'+pad(s%60); };
+const mb = n => n>=1e9 ? (n/1e9).toLocaleString('es-AR',{maximumFractionDigits:1})+' GB' : (n/1e6).toLocaleString('es-AR',{maximumFractionDigits:1})+' MB';
+const pl = (n, a, b) => n+' '+(n===1?a:b);
+
+// ---------- datos: todo queda en el teléfono (IndexedDB) ----------
+const MEM = {items:new Map(), files:new Map(), thumbs:new Map()};
+const DB = {
+  db:null, mem:false,
+  open(){ return new Promise((res,rej)=>{ let r; try{ r=indexedDB.open('lumen',1); }catch(e){ return rej(e); }
+    r.onupgradeneeded=()=>{ const d=r.result; ['items','files','thumbs'].forEach(n=>{ if(!d.objectStoreNames.contains(n)) d.createObjectStore(n); }); };
+    r.onsuccess=()=>{ DB.db=r.result; res(); }; r.onerror=()=>rej(r.error); }); },
+  st(n,m){ return DB.db.transaction(n,m).objectStore(n); },
+  q(r){ return new Promise((res,rej)=>{ r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); },
+  async all(n){ if(DB.mem) return [...MEM[n].values()]; return DB.q(DB.st(n,'readonly').getAll()); },
+  async keys(n){ if(DB.mem) return [...MEM[n].keys()]; return DB.q(DB.st(n,'readonly').getAllKeys()); },
+  async get(n,k){ if(DB.mem) return MEM[n].get(k); return DB.q(DB.st(n,'readonly').get(k)); },
+  async put(n,k,v){ if(DB.mem){ MEM[n].set(k,v); return; } return DB.q(DB.st(n,'readwrite').put(v,k)); },
+  async del(n,k){ if(DB.mem){ MEM[n].delete(k); return; } return DB.q(DB.st(n,'readwrite').delete(k)); },
+};
+
+const S = {items:[], byId:new Map(), albums:LS.get('lumen.albums',[]), name:LS.get('lumen.name',''),
+  tab:'home', chip:'all', libChip:'all', q:'', sel:null, selAlbum:null};
+const TH = new Map();             // id -> url de la miniatura
+const CTX = {};                   // listas de ids para abrir el visor
+const F = {all:()=>true, img:m=>m.type==='image', vid:m=>m.type==='video', fav:m=>!!m.fav};
+const CHIPS = [['all','Todo'],['img','Fotos'],['vid','Videos'],['fav','Favoritos']];
+const byDate = (a,b) => b.date-a.date || b.added-a.added;
+const item = id => S.byId.get(id);
+const saveAlbums = () => LS.set('lumen.albums', S.albums);
+const thumb = id => TH.get(id) || PH;
+function setItems(list){ S.items = list.sort(byDate); S.byId = new Map(list.map(m=>[m.id,m])); }
+const countLabel = ids => { let v=0,f=0; ids.forEach(id=>{ const m=item(id); if(!m) return; m.type==='video'?v++:f++; });
+  return [f?pl(f,'foto','fotos'):'', v?pl(v,'video','videos'):''].filter(Boolean).join(' · ') || 'Vacío'; };
+
+// ---------- miniaturas ----------
+const TW = 480;
+function toBlob(c, q=.8){ return new Promise(r => c.toBlob(r, 'image/jpeg', q)); }
+async function imageThumb(file){
+  try{
+    const bmp = await createImageBitmap(file);
+    const s = Math.min(1, TW/Math.max(bmp.width,bmp.height));
+    const c = document.createElement('canvas'); c.width=Math.round(bmp.width*s); c.height=Math.round(bmp.height*s);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
+    const t = await toBlob(c,.78); const r = {thumb:t, w:bmp.width, h:bmp.height, dur:0}; bmp.close && bmp.close(); return r;
+  }catch(e){ return {thumb:null, w:0, h:0, dur:0}; }
+}
+function videoThumb(file){
+  return new Promise(res => {
+    const v=document.createElement('video'); v.muted=true; v.playsInline=true; v.preload='auto';
+    const url=URL.createObjectURL(file); let done=false;
+    const fin = r => { if(done) return; done=true; URL.revokeObjectURL(url); v.removeAttribute('src'); res(r); };
+    v.onloadeddata = () => { const d=isFinite(v.duration)?v.duration:0; v.currentTime = d ? Math.min(1, d/3) : 0.05; };
+    v.onseeked = async () => {
+      try{
+        const s=Math.min(1, TW/Math.max(v.videoWidth||1,v.videoHeight||1));
+        const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(v.videoWidth*s)); c.height=Math.max(1,Math.round(v.videoHeight*s));
+        c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+        fin({thumb: await toBlob(c,.78), w:v.videoWidth, h:v.videoHeight, dur: isFinite(v.duration)?v.duration:0});
+      }catch(e){ fin({thumb:null,w:0,h:0,dur:0}); }
+    };
+    v.onerror = () => fin({thumb:null,w:0,h:0,dur:0});
+    setTimeout(()=>fin({thumb:null,w:0,h:0,dur:0}), 9000);
+    v.src=url;
+  });
+}
+
+// ---------- agregar ----------
+const uid = () => 'm'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+async function addFiles(files, opt={}){
+  files = files.filter(f => /^(image|video)\//.test(f.type) || /\.(jpe?g|png|gif|webp|heic|heif|avif|mp4|mov|webm|m4v|3gp)$/i.test(f.name||''));
+  if(!files.length){ toast('Elegí fotos o videos.'); return []; }
+  const added=[];
+  for(let k=0;k<files.length;k++){
+    const f=files[k];
+    if(!opt.quiet) toast(`Agregando ${k+1} de ${files.length}…`, 0);
+    const isV = (f.type||'').startsWith('video/') || /\.(mp4|mov|webm|m4v|3gp)$/i.test(f.name||'');
+    const t = isV ? await videoThumb(f) : await imageThumb(f);
+    const m = {id:uid(), type:isV?'video':'image', name:f.name||(isV?'Video':'Foto'), date:f.lastModified||Date.now(), added:Date.now()+k,
+      size:f.size||0, w:t.w, h:t.h, dur: opt.dur && isV ? opt.dur : t.dur, mime:f.type||'', fav:false, sample:!!opt.sample};
+    try{
+      await DB.put('files', m.id, f);
+      if(t.thumb) await DB.put('thumbs', m.id, t.thumb);
+      await DB.put('items', m.id, m);
+    }catch(e){ toast('No hay más lugar para guardar. Liberá espacio en el celular.'); break; }
+    if(t.thumb) TH.set(m.id, URL.createObjectURL(t.thumb));
+    added.push(m);
+  }
+  setItems([...S.items, ...added]);
+  refresh();
+  if(!opt.quiet) toast(added.length ? `Listo: ${pl(added.length,'agregado','agregados')}` : 'No se pudo agregar.');
+  return added;
+}
+$('#pick').addEventListener('change', e => { const fs=[...e.target.files]; e.target.value=''; if(fs.length) addFiles(fs); });
+const pickFiles = () => $('#pick').click();
+
+// ---------- borrar / favoritos / compartir ----------
+async function delItems(ids){
+  for(const id of ids){
+    await DB.del('files',id); await DB.del('thumbs',id); await DB.del('items',id);
+    const u=TH.get(id); if(u){ URL.revokeObjectURL(u); TH.delete(id); }
+    if(M.id===id) miniStop();
+  }
+  const set=new Set(ids);
+  S.albums.forEach(a => a.ids = a.ids.filter(x => !set.has(x))); saveAlbums();
+  setItems(S.items.filter(m => !set.has(m.id)));
+  refresh();
+}
+async function setFav(ids, val){
+  for(const id of ids){ const m=item(id); if(!m) continue; m.fav = val===undefined ? !m.fav : val; await DB.put('items', id, m); }
+  refresh();
+}
+async function shareIds(ids){
+  try{
+    const files=[];
+    for(const id of ids){ const b=await DB.get('files',id), m=item(id); if(b) files.push(new File([b], m.name||'lumen', {type:b.type||m.mime||''})); }
+    if(navigator.canShare && navigator.canShare({files})){ await navigator.share({files}); }
+    else toast('Compartir no está disponible en este navegador.');
+  }catch(e){ if(e && e.name!=='AbortError') toast('No se pudo compartir.'); }
+}
+
+// ---------- álbumes ----------
+function newAlbum(name, ids=[]){ const a={id:'a'+Date.now().toString(36), name:name.trim().slice(0,60)||'Álbum nuevo', ids:[...new Set(ids)], created:Date.now()}; S.albums.unshift(a); saveAlbums(); return a; }
+function addToAlbum(a, ids){ const set=new Set(a.ids); ids.forEach(i=>set.add(i)); a.ids=[...set]; saveAlbums(); }
+const albumIds = a => a.ids.filter(id=>S.byId.has(id)).sort((x,y)=>byDate(item(x),item(y)));
+const albumCover = a => { const ids=albumIds(a); return ids.length ? thumb(ids[0]) : null; };
+
+// ---------- recuerdos: colecciones armadas solas ----------
+function memories(list){
+  const out=[], used=new Set(), groups=new Map();
+  list.forEach(m => { const k=mKey(m.date); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(m.id); });
+  const now=mKey(Date.now());
+  const push = (k, title) => { if(groups.has(k) && !used.has(k)){ used.add(k); out.push({kind:'mem', id:'m'+k, title, ids:groups.get(k)}); } };
+  push(now, 'Este mes');
+  push(now-12, 'Hace un año');
+  push(now-1, mName(now-1));
+  [...groups.entries()].sort((a,b)=>b[1].length-a[1].length).forEach(([k]) => { if(out.length<6) push(k, mLabel(k)); });
+  return out;
+}
+
+// ---------- capa de navegación (el botón atrás cierra lo último abierto) ----------
+const stack=[];
+let noPush=false;
+function pushLayer(close){ if(noPush) return; stack.push(close); document.body.classList.add('lock'); if(!inFrame) try{ history.pushState({lumen:stack.length},''); }catch(e){} }
+function popLayer(){ if(!stack.length) return; if(!inFrame && history.state && history.state.lumen){ history.back(); } else { const c=stack.pop(); c && c(); afterPop(); } }
+function afterPop(){ if(!stack.length) document.body.classList.remove('lock'); }
+addEventListener('popstate', () => { const c=stack.pop(); if(c) c(); afterPop(); });
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape'){ if(stack.length) popLayer(); else if(S.sel) selEnd(); }
+  if(V.el && (e.key==='ArrowRight'||e.key==='ArrowLeft')) vGo(V.i + (e.key==='ArrowRight'?1:-1));
+});
+
+// ---------- toast ----------
+let toastT;
+function toast(t, ms=2600){ const el=$('#toast'); el.textContent=t; el.hidden=false; clearTimeout(toastT); if(ms) toastT=setTimeout(()=>el.hidden=true, ms); }
+
+// ---------- encabezado y pestañas ----------
+function greet(){ const hr=new Date().getHours(); return hr>=5&&hr<12 ? '¡Buenos días!' : hr>=12&&hr<20 ? '¡Buenas tardes!' : '¡Buenas noches!'; }
+function renderTop(){
+  $('#title').textContent = S.tab==='home' ? greet() : S.tab==='lib' ? 'Tu biblioteca' : 'Buscar';
+  const av=$('#avatar'); av.innerHTML = S.name ? esc(S.name.trim().charAt(0).toUpperCase()) : I.user;
+  const sub=$('#sub');
+  if(S.tab==='search'){
+    sub.innerHTML = `<label class="search">${I.search}<input id="q" type="search" placeholder="Mes, año, álbum, nombre…" autocomplete="off" enterkeyhint="search" aria-label="Buscar en tus fotos y videos"></label>`;
+    const q=$('#q'); q.value=S.q; q.addEventListener('input', () => { S.q=q.value; renderMain(); });
+  } else {
+    const cur = S.tab==='home' ? S.chip : S.libChip;
+    const list = S.tab==='lib' ? [...CHIPS, ['albums','Álbumes']] : CHIPS;
+    sub.innerHTML = `<div class="chips" role="group" aria-label="Filtrar">${list.map(([k,t])=>`<button class="chip" type="button" data-chip="${k}" aria-pressed="${k===cur}">${t}</button>`).join('')}${S.tab==='lib' && cur!=='albums' && S.items.length ? `<button class="chip sel" type="button" data-act="select">${S.sel?'Listo':'Seleccionar'}</button>`:''}</div>`;
+  }
+  $('#pill').dataset.on = S.tab;
+  document.querySelectorAll('#nav [data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab===S.tab ? 'page' : 'false'));
+}
+$('#sub').addEventListener('click', e => {
+  const c=e.target.closest('[data-chip]');
+  if(c){ if(S.tab==='home') S.chip=c.dataset.chip; else { S.libChip=c.dataset.chip; if(S.libChip==='albums' && S.sel) selEnd(); } renderTop(); renderMain(); return; }
+  if(e.target.closest('[data-act="select"]')){ S.sel ? selEnd() : selStart(); }
+});
+function setTab(t){ if(S.sel) selEnd(); S.tab=t; renderTop(); renderMain(); window.scrollTo(0,0); if(t==='search') setTimeout(()=>{ const q=$('#q'); if(q && !('ontouchstart' in window)) q.focus(); }, 50); }
+$('#nav').addEventListener('click', e => { const b=e.target.closest('[data-tab]'); if(!b) return; if(b.dataset.tab===S.tab) window.scrollTo({top:0,behavior:reduce()?'auto':'smooth'}); else setTab(b.dataset.tab); });
+
+// ---------- piezas de la interfaz ----------
+const tileHTML = (id, ctx, i) => { const m=item(id); const t=TH.get(id);
+  return `<button class="tile${S.sel&&S.sel.has(id)?' on':''}" type="button" data-ctx="${ctx}" data-i="${i}" data-id="${id}" aria-label="${m.type==='video'?'Video':'Foto'} del ${esc(fmtDate(m.date))}">
+    ${t?`<img src="${t}" alt="" loading="lazy" decoding="async">`:`<span class="nf">${m.type==='video'?'VIDEO':'FOTO'}</span>`}
+    ${m.type==='video'?`<span class="vd">${I.play}${m.dur?dur(m.dur):''}</span>`:''}${m.fav?`<span class="fv">${I.heartF}</span>`:''}<span class="ck">${I.check}</span></button>`; };
+const gridHTML = (ids, ctx) => { CTX[ctx]=ids; return `<div class="grid">${ids.map((id,i)=>tileHTML(id,ctx,i)).join('')}</div>`; };
+const credit = () => `<a class="credit" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span>Desarrollado por</span><svg viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><b>Hexacode</b></a>`;
+
+function renderMain(){
+  const main=$('#main');
+  main.classList.toggle('selmode', !!S.sel);
+  if(S.tab==='home') main.innerHTML = homeHTML();
+  else if(S.tab==='lib') main.innerHTML = libHTML();
+  else main.innerHTML = searchHTML();
+}
+function refresh(){ renderTop(); renderMain(); refreshers.forEach(f=>f()); if(S.sel) renderSel(); }
+const refreshers = new Set();
+
+function homeHTML(){
+  if(!S.items.length) return `<section class="empty">
+      <div class="lg">${mk()}</div>
+      <h2>Tu galería, con luz propia</h2>
+      <p>Agregá fotos y videos de tu celular. Lumen los ordena solo en recuerdos y álbumes. Quedan guardados únicamente en este teléfono: nadie más los ve.</p>
+      <div class="btns"><button class="btn" type="button" data-act="add">${I.plus}Agregar fotos y videos</button><button class="btn ghost" type="button" data-act="samples">${I.sparkle}Probar con ejemplos</button></div>
+    </section>${credit()}`;
+  const list = S.items.filter(F[S.chip]);
+  if(!list.length) return `<p class="note">${S.chip==='fav'?'Todavía no marcaste favoritos. Abrí una foto y tocá el corazón.':S.chip==='vid'?'Todavía no agregaste videos.':'Todavía no agregaste fotos.'}</p>${credit()}`;
+  let out='';
+  if(S.chip==='all'){
+    const q=[];
+    if(S.items.some(F.fav)) q.push(`<button class="qt" type="button" data-coll="fav"><span class="qi g-fav">${I.heartF}</span><b>Tus favoritos</b></button>`);
+    if(S.items.some(F.vid)) q.push(`<button class="qt" type="button" data-coll="vid"><span class="qi g-vid">${I.play}</span><b>Tus videos</b></button>`);
+    S.albums.forEach(a => { if(q.length>=6) return; const c=albumCover(a); q.push(`<button class="qt" type="button" data-album="${a.id}">${c?`<img class="qi" src="${c}" alt="">`:`<span class="qi" style="background:var(--s3)">${I.album}</span>`}<b>${esc(a.name)}</b></button>`); });
+    if(q.length<6) q.push(`<button class="qt" type="button" data-act="newalbum"><span class="qi" style="background:var(--s3)">${I.plus}</span><b>Nuevo álbum</b></button>`);
+    if(q.length%2) q.push(`<button class="qt" type="button" data-act="add"><span class="qi" style="background:var(--s3)">${I.image}</span><b>Agregar más</b></button>`);
+    out += `<div class="quick">${q.join('')}</div>`;
+  }
+  const mems = memories(list);
+  if(mems.length){
+    S.mems = mems;
+    out += `<section class="sec"><h2>Recuerdos para ${esc(S.name.trim().split(' ')[0]||'vos')}</h2><div class="rail">${mems.map((c,i)=>`
+      <div class="mem" role="group" aria-label="${esc(c.title)}">
+        <button type="button" data-mem="${i}" aria-label="Abrir ${esc(c.title)}" style="position:absolute;inset:0;z-index:1"></button>
+        <img src="${thumb(c.ids[0])}" alt="">
+        <span class="mk">${mk(true)}</span>
+        <span class="tx"><b>${esc(c.title)}</b><span>${countLabel(c.ids)}</span></span>
+        <button class="play glass ib" type="button" data-memplay="${i}" aria-label="Ver ${esc(c.title)} como presentación">${I.play}</button>
+      </div>`).join('')}</div></section>`;
+  }
+  if(S.chip==='all'){
+    out += `<section class="sec"><div class="hrow"><h2>Tus álbumes</h2>${S.albums.length?`<button class="lnk" type="button" data-act="allalbums">Ver todos</button>`:''}</div><div class="rail">
+      ${S.albums.map(a=>{ const c=albumCover(a); return `<button class="card" type="button" data-album="${a.id}"><span class="cv">${c?`<img src="${c}" alt="" loading="lazy">`:`<span class="newc">${I.album}</span>`}</span><b>${esc(a.name)}</b><span>${countLabel(albumIds(a))}</span></button>`; }).join('')}
+      <button class="card" type="button" data-act="newalbum"><span class="cv"><span class="newc">${I.plus}</span></span><b>Nuevo álbum</b><span>Juntá tus fotos</span></button>
+    </div></section>`;
+    const vids = S.items.filter(F.vid);
+    if(vids.length){ CTX.hv = vids.map(m=>m.id);
+      out += `<section class="sec"><div class="hrow"><h2>Tus videos</h2><button class="lnk" type="button" data-coll="vid">Ver todos</button></div><div class="rail">${vids.slice(0,12).map((m,i)=>`
+        <button class="card v" type="button" data-ctx="hv" data-i="${i}"><span class="cv"><img src="${thumb(m.id)}" alt="" loading="lazy"><span class="badge glass">${I.play}${m.dur?dur(m.dur):''}</span></span><b>${esc(fmtDate(m.date))}</b><span>${esc(m.name)}</span></button>`).join('')}</div></section>`;
+    }
+  }
+  const rec = list.slice(0,24).map(m=>m.id);
+  out += `<section class="sec"><div class="hrow"><h2>Recientes</h2><button class="lnk" type="button" data-act="tolib">Ver todo</button></div>${gridHTML(rec,'hr')}</section>`;
+  return out + credit();
+}
+
+function libHTML(){
+  if(!S.items.length) return `<p class="note">Tu biblioteca está vacía. Tocá <b>+</b> arriba para agregar fotos y videos.</p>`;
+  if(S.libChip==='albums'){
+    return `<div class="rows" style="margin-top:14px">
+      <button class="arow" type="button" data-act="newalbum"><span class="ac">${I.plus}</span><span><b>Nuevo álbum</b><span>Juntá fotos y videos</span></span></button>
+      ${S.items.some(F.fav)?`<button class="arow" type="button" data-coll="fav"><span class="ac g-fav" style="color:#fff">${I.heartF}</span><span><b>Tus favoritos</b><span>Colección · ${countLabel(S.items.filter(F.fav).map(m=>m.id))}</span></span></button>`:''}
+      ${S.albums.map(a=>{ const c=albumCover(a); return `<button class="arow" type="button" data-album="${a.id}"><span class="ac">${c?`<img src="${c}" alt="" loading="lazy">`:I.album}</span><span><b>${esc(a.name)}</b><span>Álbum · ${countLabel(albumIds(a))}</span></span></button>`; }).join('')}
+    </div>`;
+  }
+  const list = S.items.filter(F[S.libChip]);
+  if(!list.length) return `<p class="note">No hay nada acá todavía.</p>`;
+  CTX.lib = list.map(m=>m.id);
+  let out='', i=0, k=null, buf=[];
+  const flush = () => { if(!buf.length) return; out += `<div class="mhead"><h3>${mLabel(k)}</h3><span>${countLabel(buf.map(x=>x.id))}</span></div><div class="grid">${buf.map(x=>tileHTML(x.id,'lib',x.i)).join('')}</div>`; buf=[]; };
+  list.forEach(m => { const mk2=mKey(m.date); if(mk2!==k){ flush(); k=mk2; } buf.push({id:m.id,i:i++}); });
+  flush();
+  return out;
+}
+
+function searchHTML(){
+  const q=norm(S.q).trim();
+  if(!q){
+    const sug = new Set(['Favoritos','Videos','Fotos']);
+    S.albums.slice(0,6).forEach(a=>sug.add(a.name));
+    [...new Set(S.items.map(m=>mKey(m.date)))].slice(0,6).forEach(k=>sug.add(mLabel(k)));
+    return S.items.length ? `<div class="sec"><h2>Probá con</h2><div class="chips" style="flex-wrap:wrap;margin:0;padding:0">${[...sug].map(s=>`<button class="chip" type="button" data-sug="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>` : `<p class="note">Cuando agregues fotos y videos, vas a poder buscarlos por mes, año, álbum o nombre.</p>`;
+  }
+  const words=q.split(/\s+/);
+  const inAlb = new Map(); S.albums.forEach(a => a.ids.forEach(id => inAlb.set(id, (inAlb.get(id)||'')+' '+a.name)));
+  const res = S.items.filter(m => {
+    const d=new Date(m.date);
+    const hay = norm([m.name, d.toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}), d.toLocaleDateString('es-AR',{weekday:'long'}),
+      m.type==='video'?'video videos':'foto fotos imagen', m.fav?'favorito favoritos':'', inAlb.get(m.id)||''].join(' '));
+    return words.every(w => hay.includes(w) || (w.length>3 && hay.includes(w.replace(/s$/,''))));
+  }).map(m=>m.id);
+  if(!res.length) return `<p class="note">No encontramos nada con “${esc(S.q.trim())}”. Probá con un mes, un año o el nombre de un álbum.</p>`;
+  return `<div class="mhead"><h3>Resultados</h3><span>${countLabel(res)}</span></div>${gridHTML(res,'sr')}`;
+}
+
+// ---------- clics del contenido ----------
+let lp = {t:null, fired:false};
+function onContentClick(e){
+  if(lp.fired){ lp.fired=false; e.preventDefault(); return; }
+  const t=e.target;
+  const a=t.closest('[data-act]');
+  if(a){ const act=a.dataset.act;
+    if(act==='add') return pickFiles();
+    if(act==='samples') return makeSamples();
+    if(act==='newalbum') return askAlbumName('', name => { const al=newAlbum(name); refresh(); openColl({kind:'album', id:al.id}); });
+    if(act==='tolib') return setTab('lib');
+    if(act==='allalbums'){ S.libChip='albums'; return setTab('lib'); }
+  }
+  const sg=t.closest('[data-sug]'); if(sg){ S.q=sg.dataset.sug; renderTop(); renderMain(); return; }
+  const mp=t.closest('[data-memplay]'); if(mp){ const c=S.mems[+mp.dataset.memplay]; return openViewer(c.ids, 0, {show:true}); }
+  const me=t.closest('[data-mem]'); if(me){ const c=S.mems[+me.dataset.mem]; return openColl({kind:'mem', title:c.title, ids:c.ids}); }
+  const al=t.closest('[data-album]'); if(al) return openColl({kind:'album', id:al.dataset.album});
+  const co=t.closest('[data-coll]'); if(co) return openColl({kind:co.dataset.coll});
+  const tl=t.closest('[data-ctx]');
+  if(tl){
+    const id = tl.dataset.id || CTX[tl.dataset.ctx][+tl.dataset.i];
+    if(S.sel && tl.dataset.id){ S.sel.has(id) ? S.sel.delete(id) : S.sel.add(id); tl.classList.toggle('on', S.sel.has(id)); renderSel(); return; }
+    openViewer(CTX[tl.dataset.ctx], +tl.dataset.i);
+  }
+}
+$('#main').addEventListener('click', onContentClick);
+// mantener apretado en la biblioteca: arranca la selección
+function bindLongPress(root){
+  root.addEventListener('pointerdown', e => {
+    const tl=e.target.closest('.tile[data-id]'); if(!tl || S.sel || S.tab!=='lib' || root!==$('#main')) return;
+    clearTimeout(lp.t); lp.fired=false;
+    lp.t=setTimeout(()=>{ lp.fired=true; selStart(tl.dataset.id); if(navigator.vibrate) try{ navigator.vibrate(12); }catch(_){} }, 480);
+  });
+  ['pointerup','pointercancel','pointerleave','scroll'].forEach(ev => root.addEventListener(ev, ()=>clearTimeout(lp.t), {passive:true}));
+  addEventListener('scroll', ()=>clearTimeout(lp.t), {passive:true});
+}
+bindLongPress($('#main'));
+$('#main').addEventListener('contextmenu', e => { if(e.target.closest('.tile')) e.preventDefault(); });
+
+// ---------- selección ----------
+function selStart(id, album){ S.sel=new Set(id?[id]:[]); S.selAlbum=album||null; document.body.classList.add('selecting'); if(S.tab!=='lib' || S.libChip==='albums'){ S.tab='lib'; S.libChip='all'; window.scrollTo(0,0); } renderTop(); renderMain(); renderSel(); }
+function selEnd(){ S.sel=null; S.selAlbum=null; document.body.classList.remove('selecting'); $('#selbar').hidden=true; renderTop(); renderMain(); }
+function renderSel(){
+  const bar=$('#selbar'), n=S.sel.size; bar.hidden=false;
+  if(S.selAlbum){ const a=S.albums.find(x=>x.id===S.selAlbum);
+    bar.innerHTML = `<span class="st">${n?pl(n,'elegido','elegidos'):'Tocá las fotos que querés sumar'}</span><button class="btn" type="button" data-s="addto" ${n?'':'disabled style="opacity:.5"'}>Agregar a ${esc(a?a.name:'álbum')}</button><button class="ib" type="button" data-s="x" aria-label="Cancelar">${I.x}</button>`;
+  } else {
+    bar.innerHTML = `<span class="st">${n?pl(n,'elegido','elegidos'):'Tocá para elegir'}</span>
+      <button class="ib" type="button" data-s="album" aria-label="Agregar a un álbum" ${n?'':'disabled'}>${I.album}</button>
+      <button class="ib" type="button" data-s="fav" aria-label="Marcar como favoritos" ${n?'':'disabled'}>${I.heart}</button>
+      <button class="ib" type="button" data-s="share" aria-label="Compartir" ${n?'':'disabled'}>${I.share}</button>
+      <button class="ib" type="button" data-s="del" aria-label="Borrar" ${n?'':'disabled'}>${I.trash}</button>
+      <button class="ib" type="button" data-s="x" aria-label="Terminar la selección">${I.x}</button>`;
+  }
+}
+$('#selbar').addEventListener('click', e => {
+  const b=e.target.closest('[data-s]'); if(!b || b.disabled) return; const ids=[...S.sel], s=b.dataset.s;
+  if(s==='x') return selEnd();
+  if(s==='addto'){ const a=S.albums.find(x=>x.id===S.selAlbum); if(a){ addToAlbum(a, ids); toast(`${pl(ids.length,'agregado','agregados')} a ${a.name}`); } selEnd(); if(a) openColl({kind:'album', id:a.id}); return; }
+  if(s==='album') return pickAlbum(ids, () => selEnd());
+  if(s==='fav'){ const all=ids.every(id=>item(id).fav); setFav(ids, !all); toast(all?'Quitados de favoritos':'Marcados como favoritos'); return selEnd(); }
+  if(s==='share') return shareIds(ids);
+  if(s==='del') return confirmDel(ids, () => selEnd());
+});
+
+// ---------- hojas (menús que suben desde abajo) ----------
+function sheet(html, bind){
+  const el=h(`<div class="sh" role="dialog" aria-modal="true"><div class="bd"></div><div class="pn glass"><div class="grab" aria-hidden="true"></div>${html}</div></div>`);
+  document.body.append(el);
+  const close = () => el.remove();
+  el.querySelector('.bd').onclick = () => popLayer();
+  pushLayer(close);
+  bind && bind(el, () => popLayer());
+  const f=el.querySelector('input,button.btn,.opt'); if(f && !('ontouchstart' in window)) setTimeout(()=>f.focus(), 60);
+  return el;
+}
+function askAlbumName(cur, done, title){
+  sheet(`<h3>${title||'Nuevo álbum'}</h3><p>Ponele un nombre, por ejemplo “Vacaciones 2026”.</p>
+    <form id="af"><input class="field" id="an" maxlength="60" placeholder="Nombre del álbum" value="${esc(cur)}" autocomplete="off" enterkeyhint="done">
+    <div class="btns"><button class="btn ghost" type="button" data-c>Cancelar</button><button class="btn" type="submit">${cur?'Guardar':'Crear'}</button></div></form>`,
+    (el, close) => { el.querySelector('[data-c]').onclick=close; const inp=el.querySelector('#an'); setTimeout(()=>inp.focus(),80);
+      el.querySelector('#af').onsubmit = e => { e.preventDefault(); const v=inp.value.trim(); if(!v){ inp.focus(); return; } close(); setTimeout(()=>done(v), 30); }; });
+}
+function pickAlbum(ids, after){
+  sheet(`<h3>Agregar a un álbum</h3><p>${countLabel(ids)}</p><div>
+    <button class="opt" type="button" data-new><span class="oi">${I.plus}</span><span>Nuevo álbum</span></button>
+    ${S.albums.map(a=>{ const c=albumCover(a); return `<button class="opt" type="button" data-a="${a.id}"><span class="oi">${c?`<img src="${c}" alt="">`:I.album}</span><span>${esc(a.name)}<small>${countLabel(albumIds(a))}</small></span></button>`; }).join('')}</div>`,
+    (el, close) => el.addEventListener('click', e => {
+      if(e.target.closest('[data-new]')){ close(); setTimeout(()=>askAlbumName('', name => { const a=newAlbum(name, ids); refresh(); toast(`Álbum “${a.name}” creado`); after&&after(); }), 40); return; }
+      const b=e.target.closest('[data-a]'); if(!b) return; const a=S.albums.find(x=>x.id===b.dataset.a);
+      addToAlbum(a, ids); close(); refresh(); toast(`${pl(ids.length,'agregado','agregados')} a ${a.name}`); after&&after();
+    }));
+}
+function confirmDel(ids, after){
+  sheet(`<h3>¿Borrar ${countLabel(ids).toLowerCase()}?</h3><p>Se borran de Lumen. Las fotos y videos originales siguen en la galería de tu celular.</p>
+    <div class="btns"><button class="btn ghost" type="button" data-c>Cancelar</button><button class="btn danger" type="button" data-ok>Borrar</button></div>`,
+    (el, close) => { el.querySelector('[data-c]').onclick=close; el.querySelector('[data-ok]').onclick = async () => { close(); await delItems(ids); toast('Borrado'); after&&after(); }; });
+}
+function infoSheet(id){
+  const m=item(id); if(!m) return;
+  const al=S.albums.filter(a=>a.ids.includes(id)).map(a=>a.name).join(', ');
+  sheet(`<h3>Información</h3><dl class="kv">
+    <dt>Nombre</dt><dd>${esc(m.name)}</dd><dt>Fecha</dt><dd>${esc(cap(fmtLong(m.date)))}</dd>
+    <dt>Tipo</dt><dd>${m.type==='video'?'Video':'Foto'}</dd>${m.w?`<dt>Tamaño</dt><dd>${m.w} × ${m.h}</dd>`:''}
+    ${m.dur?`<dt>Duración</dt><dd>${dur(m.dur)}</dd>`:''}<dt>Ocupa</dt><dd>${mb(m.size)}</dd>${al?`<dt>Álbumes</dt><dd>${esc(al)}</dd>`:''}</dl>
+    <div class="btns"><button class="btn" type="button" data-c>Listo</button></div>`, (el, close) => el.querySelector('[data-c]').onclick=close);
+}
+async function profileSheet(){
+  let used='';
+  try{ const e=await navigator.storage.estimate(); if(e && e.usage) used=mb(e.usage); }catch(e){}
+  const samples=S.items.filter(m=>m.sample).length;
+  sheet(`<div class="prof"><span class="avatar">${S.name?esc(S.name.trim().charAt(0).toUpperCase()):I.user}</span><div><h3 style="margin:0">${esc(S.name||'Tu perfil')}</h3><span style="color:var(--mu)">${countLabel(S.items.map(m=>m.id))}${used?' · '+used:''}</span></div></div>
+    <label style="display:grid;gap:8px;font-weight:600">¿Cómo te llamás?<input class="field" id="pn" maxlength="40" placeholder="Tu nombre" value="${esc(S.name)}" autocomplete="given-name"></label>
+    <p style="margin-top:14px">Tus fotos y videos se guardan solo en este celular. Si desinstalás Lumen o borrás los datos del navegador, se pierden las copias de Lumen (los originales siguen en tu galería).</p>
+    <div>${samples?`<button class="opt" type="button" data-rs><span class="oi">${I.sparkle}</span><span>Quitar los ejemplos<small>${pl(samples,'elemento','elementos')} de prueba</small></span></button>`:''}
+    ${S.items.length?`<button class="opt danger" type="button" data-all><span class="oi">${I.trash}</span><span>Borrar todo de Lumen<small>No toca la galería de tu celular</small></span></button>`:''}</div>
+    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v1.0</p>`,
+    (el, close) => {
+      const pn=el.querySelector('#pn');
+      pn.addEventListener('input', () => { S.name=pn.value.slice(0,40); LS.set('lumen.name', S.name); renderTop(); if(S.tab==='home') renderMain(); });
+      const rs=el.querySelector('[data-rs]'); if(rs) rs.onclick = async () => { close(); const ids=S.items.filter(m=>m.sample).map(m=>m.id); await delItems(ids); S.albums=S.albums.filter(a=>!a.sample); saveAlbums(); refresh(); toast('Ejemplos quitados'); };
+      const all=el.querySelector('[data-all]'); if(all) all.onclick = () => { close(); setTimeout(()=>confirmDel(S.items.map(m=>m.id), () => { S.albums=[]; saveAlbums(); refresh(); }), 40); };
+    });
+}
+$('#avatar').onclick = profileSheet;
+$('#addBtn').onclick = pickFiles;
+
+// ---------- colección (álbum, recuerdo, favoritos, videos) ----------
+function collIds(c){
+  if(c.kind==='album'){ const a=S.albums.find(x=>x.id===c.id); return a ? albumIds(a) : []; }
+  if(c.kind==='fav') return S.items.filter(F.fav).map(m=>m.id);
+  if(c.kind==='vid') return S.items.filter(F.vid).map(m=>m.id);
+  return c.ids.filter(id=>S.byId.has(id));
+}
+function collTitle(c){ if(c.kind==='album'){ const a=S.albums.find(x=>x.id===c.id); return a?a.name:'Álbum'; } return c.kind==='fav'?'Tus favoritos':c.kind==='vid'?'Tus videos':c.title; }
+function openColl(c){
+  const el=h(`<div class="ov" role="dialog" aria-modal="true"></div>`);
+  document.body.append(el);
+  const ctx='c'+Date.now();
+  const draw = () => {
+    if(c.kind==='album' && !S.albums.some(x=>x.id===c.id)) return;
+    const ids=collIds(c), title=collTitle(c);
+    el.setAttribute('aria-label', title);
+    el.innerHTML = `<div class="ch">${ids.length?`<img src="${thumb(ids[0])}" alt="">`:'<div class="ph"></div>'}
+        <button class="ib glass back" type="button" data-x aria-label="Volver">${I.back}</button>
+        <div class="tx"><h2>${esc(title)}</h2><span>${c.kind==='album'?'Álbum':c.kind==='mem'?'Recuerdo':'Colección'} · ${countLabel(ids)}</span></div></div>
+      <div class="cbar">${ids.length?`<button class="gplay" type="button" data-play aria-label="Ver como presentación">${I.play}</button>`:''}
+        ${c.kind==='album'?`<button class="ib glass" type="button" data-addin aria-label="Agregar fotos al álbum">${I.plus}</button><span class="sp"></span><button class="ib glass" type="button" data-more aria-label="Más opciones del álbum">${I.more}</button>`:'<span class="sp"></span>'}</div>
+      <main>${ids.length?gridHTML(ids, ctx):`<p class="note">Este álbum está vacío. Tocá <b>+</b> para sumarle fotos y videos de tu biblioteca.</p>`}</main>`;
+  };
+  draw(); refreshers.add(draw);
+  el.addEventListener('click', e => {
+    if(e.target.closest('[data-x]')) return popLayer();
+    if(e.target.closest('[data-play]')) return openViewer(collIds(c), 0, {show:true});
+    if(e.target.closest('[data-addin]')){ popLayer(); setTimeout(()=>selStart(null, c.id), 60); return; }
+    if(e.target.closest('[data-more]')){
+      const a=S.albums.find(x=>x.id===c.id);
+      return sheet(`<h3>${esc(a.name)}</h3><div>
+        <button class="opt" type="button" data-o="add"><span class="oi">${I.plus}</span><span>Agregar fotos y videos</span></button>
+        <button class="opt" type="button" data-o="ren"><span class="oi">${I.pen}</span><span>Cambiar el nombre</span></button>
+        <button class="opt" type="button" data-o="share"><span class="oi">${I.share}</span><span>Compartir todo</span></button>
+        <button class="opt danger" type="button" data-o="del"><span class="oi">${I.trash}</span><span>Borrar el álbum<small>Las fotos quedan en tu biblioteca</small></span></button></div>`,
+        (sh, close) => sh.addEventListener('click', ev => { const o=ev.target.closest('[data-o]'); if(!o) return; const k=o.dataset.o; close();
+          if(k==='add') setTimeout(()=>{ popLayer(); setTimeout(()=>selStart(null, a.id), 60); }, 40);
+          if(k==='ren') setTimeout(()=>askAlbumName(a.name, n => { a.name=n.slice(0,60); saveAlbums(); refresh(); }, 'Cambiar el nombre'), 40);
+          if(k==='share') shareIds(albumIds(a));
+          if(k==='del') setTimeout(()=>sheet(`<h3>¿Borrar “${esc(a.name)}”?</h3><p>Se borra el álbum. Las fotos y videos siguen en tu biblioteca.</p><div class="btns"><button class="btn ghost" type="button" data-c>Cancelar</button><button class="btn danger" type="button" data-ok>Borrar álbum</button></div>`,
+            (s2, c2) => { s2.querySelector('[data-c]').onclick=c2; s2.querySelector('[data-ok]').onclick=()=>{ c2(); S.albums=S.albums.filter(x=>x.id!==a.id); saveAlbums(); setTimeout(()=>{ popLayer(); refresh(); toast('Álbum borrado'); }, 40); }; }), 40);
+        }));
+    }
+    const tl=e.target.closest('[data-ctx]'); if(tl) openViewer(CTX[tl.dataset.ctx], +tl.dataset.i);
+  });
+  pushLayer(() => { refreshers.delete(draw); el.remove(); });
+}
+
+// ---------- visor ----------
+const V = {el:null, ids:[], i:0, show:false, urls:new Map(), z:null, timer:null, paused:false, t0:0, resume:null};
+function openViewer(ids, i, opt={}){
+  if(!ids || !ids.length) return;
+  V.ids=ids.slice(); V.i=Math.max(0,Math.min(i,ids.length-1)); V.show=!!opt.show; V.resume=opt.resume||null; V.paused=false;
+  const el=h(`<div class="vw${V.show?' show':''}" role="dialog" aria-modal="true" aria-label="Visor de fotos">
+    <div class="vtrack">${V.ids.map((_,k)=>`<div class="slide" data-k="${k}"></div>`).join('')}</div>
+    <div class="vprog" ${V.show?'':'hidden'}><i></i></div>
+    <div class="vtop"><button class="ib glass" type="button" data-v="close" aria-label="Cerrar">${I.down}</button><div class="tt"><b></b><small></small></div><button class="ib glass" type="button" data-v="fav" aria-label="Favorito">${I.heart}</button></div>
+    <div class="vbot glass">
+      <button type="button" data-v="share" aria-label="Compartir">${I.share}</button>
+      <button type="button" data-v="album" aria-label="Agregar a un álbum">${I.album}</button>
+      <button type="button" data-v="info" aria-label="Información">${I.info}</button>
+      <button type="button" data-v="del" aria-label="Borrar">${I.trash}</button>
+    </div>
+    <div class="paused glass ib" hidden>${I.play}</div>
+  </div>`);
+  document.body.append(el); V.el=el;
+  const tr=el.querySelector('.vtrack');
+  requestAnimationFrame(() => { tr.scrollLeft = V.i*tr.clientWidth; vSettle(true); });
+  let st; tr.addEventListener('scroll', () => { clearTimeout(st); st=setTimeout(()=>vSettle(), 80); }, {passive:true});
+  addEventListener('resize', vResize);
+  // un toque: muestra u oculta los controles; dos toques: zoom
+  let last=0, tt;
+  tr.addEventListener('click', e => {
+    if(e.target.closest('video')) return;
+    const now=Date.now();
+    if(now-last<300){ clearTimeout(tt); last=0; const img=e.target.closest('.slide img'); if(img && !V.show) vZoom(img, e); return; }
+    last=now; tt=setTimeout(() => { if(V.show) vPause(!V.paused); else el.classList.toggle('ui-off'); }, 260);
+  });
+  vPanBind(tr);
+  el.addEventListener('click', e => { const b=e.target.closest('[data-v]'); if(!b) return; const id=V.ids[V.i], v=b.dataset.v;
+    if(v==='close') return popLayer();
+    if(v==='fav'){ setFav([id]); vChrome(); return; }
+    if(v==='share') return shareIds([id]);
+    if(v==='album') return pickAlbum([id]);
+    if(v==='info') return infoSheet(id);
+    if(v==='del') return confirmDel([id], () => vRemoved(id));
+  });
+  pushLayer(closeViewer);
+}
+function slideEl(k){ return V.el && V.el.querySelector(`.slide[data-k="${k}"]`); }
+async function vFill(k){
+  const sl=slideEl(k); if(!sl || sl.dataset.f) return; sl.dataset.f='1';
+  const id=V.ids[k], m=item(id); const blob = m && await DB.get('files', id);
+  if(!V.el || slideEl(k)!==sl || !sl.dataset.f) return;
+  if(!blob){ sl.innerHTML='<p class="err">No se encontró este archivo.</p>'; return; }
+  const url=URL.createObjectURL(blob); V.urls.set(k,url);
+  if(m.type==='video'){
+    sl.classList.add('v');
+    sl.innerHTML=`<video src="${url}" controls playsinline preload="metadata" poster="${TH.get(id)||''}"></video>`;
+    const vid=sl.querySelector('video');
+    vid.addEventListener('ended', () => { if(V.show && k===V.i) vNext(); });
+    if(k===V.i) vPlayCurrent();
+  } else {
+    const img=new Image(); img.alt=''; img.decoding='async'; img.src=url;
+    img.onerror=()=>{ sl.innerHTML='<p class="err">Este formato no se puede mostrar en este celular.</p>'; };
+    sl.replaceChildren(img);
+  }
+}
+function vUnload(k){ const sl=slideEl(k); if(!sl || !sl.dataset.f) return; const v=sl.querySelector('video'); if(v && M.v===v) return; sl.innerHTML=''; delete sl.dataset.f; sl.classList.remove('v'); const u=V.urls.get(k); if(u){ URL.revokeObjectURL(u); V.urls.delete(k); } }
+function vSettle(first){
+  if(!V.el) return; const tr=V.el.querySelector('.vtrack');
+  const k=Math.round(tr.scrollLeft/Math.max(1,tr.clientWidth));
+  if(k!==V.i || first){
+    const old=slideEl(V.i); const ov=old && old.querySelector('video'); if(ov && k!==V.i) ov.pause();
+    if(V.z) vZoomOff();
+    V.i=Math.max(0,Math.min(k,V.ids.length-1));
+    if(V.show) vShowStart();
+  }
+  for(let j=V.i-1;j<=V.i+1;j++) if(j>=0 && j<V.ids.length) vFill(j);
+  V.urls.forEach((_,j) => { if(Math.abs(j-V.i)>2) vUnload(j); });
+  vPlayCurrent(); vChrome();
+}
+function vPlayCurrent(){ const sl=slideEl(V.i); const v=sl && sl.querySelector('video'); if(!v) return;
+  if(V.resume && V.resume.k===V.i){ v.currentTime=V.resume.t; V.resume=null; }
+  if(!V.paused) v.play().catch(()=>{}); }
+function vChrome(){ if(!V.el) return; const m=item(V.ids[V.i]); if(!m) return;
+  V.el.querySelector('.tt b').textContent = fmtDate(m.date);
+  V.el.querySelector('.tt small').textContent = (V.i+1)+' de '+V.ids.length;
+  const f=V.el.querySelector('[data-v="fav"]'); f.innerHTML = m.fav?I.heartF:I.heart; f.classList.toggle('on', !!m.fav); f.setAttribute('aria-pressed', String(!!m.fav)); }
+function vGo(k){ if(!V.el) return; k=Math.max(0,Math.min(k,V.ids.length-1)); const tr=V.el.querySelector('.vtrack'); tr.scrollTo({left:k*tr.clientWidth, behavior: reduce()?'auto':'smooth'}); }
+function vNext(){ if(V.i>=V.ids.length-1){ popLayer(); return; } vGo(V.i+1); }
+function vResize(){ if(!V.el) return; const tr=V.el.querySelector('.vtrack'); tr.scrollLeft=V.i*tr.clientWidth; }
+// presentación: avanza sola (4 s por foto, los videos hasta el final)
+function vShowStart(){
+  cancelAnimationFrame(V.timer); const bar=V.el.querySelector('.vprog i'); bar.style.width='0';
+  const m=item(V.ids[V.i]); if(!m || m.type==='video') { V.el.querySelector('.vprog').style.opacity='0'; return; }
+  V.el.querySelector('.vprog').style.opacity='1';
+  V.t0=performance.now(); V.acc=0;
+  const D=4000;
+  const tick = now => { if(!V.el || !V.show) return; if(!V.paused){ const p=Math.min(1,(V.acc + now - V.t0)/D); bar.style.width=(p*100)+'%'; if(p>=1){ vNext(); return; } } V.timer=requestAnimationFrame(tick); };
+  V.timer=requestAnimationFrame(tick);
+  // respaldo por si el celular pausa la animación
+  clearTimeout(V.fb); const i0=V.i; V.fb=setTimeout(function chk(){ if(V.el && V.show && V.i===i0 && !V.paused){ if(performance.now()-V.t0+V.acc>=D+600){ vNext(); return; } V.fb=setTimeout(chk, 500); } }, D+700);
+}
+function vPause(p){
+  if(!V.el) return; const now=performance.now();
+  if(p && !V.paused){ V.acc += now - V.t0; } if(!p && V.paused){ V.t0=now; }
+  V.paused=p; V.el.querySelector('.paused').hidden=!p;
+  const v=slideEl(V.i) && slideEl(V.i).querySelector('video'); if(v){ p ? v.pause() : v.play().catch(()=>{}); }
+}
+function vRemoved(id){
+  if(!V.el) return;
+  const k=V.ids.indexOf(id); if(k<0) return;
+  const ids=V.ids.filter(x=>x!==id);
+  if(!ids.length){ popLayer(); return; }
+  const sl=slideEl(V.i), v=sl && sl.querySelector('video'); if(v) v.pause();
+  // reabre el visor con la lista nueva, sin sumar otra entrada al historial
+  const show=V.show; closeViewer();
+  noPush=true; try{ openViewer(ids, Math.min(k, ids.length-1), {show}); } finally { noPush=false; }
+}
+function closeViewer(){
+  if(!V.el) return;
+  cancelAnimationFrame(V.timer); clearTimeout(V.fb);
+  removeEventListener('resize', vResize);
+  // si un video se estaba reproduciendo, sigue en el mini reproductor
+  const sl=slideEl(V.i), v=sl && sl.querySelector('video');
+  if(v && !v.paused && !v.ended && !V.show){ miniStart(V.ids, V.i, v, V.urls.get(V.i)); V.urls.delete(V.i); }
+  V.urls.forEach(u => URL.revokeObjectURL(u)); V.urls.clear();
+  V.el.remove(); V.el=null; V.z=null;
+}
+// zoom con doble toque y arrastre
+function vZoom(img, e){
+  if(V.z){ vZoomOff(); return; }
+  const r=img.getBoundingClientRect(), s=2.5;
+  const px=e.clientX-(r.left+r.width/2), py=e.clientY-(r.top+r.height/2);
+  V.z={img, s, tx:-px*(s-1), ty:-py*(s-1)}; vZoomApply(); V.el.classList.add('zoom','ui-off');
+}
+function vZoomApply(){ const z=V.z; const w=z.img.offsetWidth, hh=z.img.offsetHeight; const mx=w*(z.s-1)/2, my=hh*(z.s-1)/2;
+  z.tx=Math.max(-mx,Math.min(mx,z.tx)); z.ty=Math.max(-my,Math.min(my,z.ty)); z.img.style.transform=`translate(${z.tx}px,${z.ty}px) scale(${z.s})`; }
+function vZoomOff(){ if(!V.z) return; V.z.img.style.transform=''; V.z=null; V.el && V.el.classList.remove('zoom'); }
+function vPanBind(tr){
+  let p=null;
+  tr.addEventListener('pointerdown', e => { if(!V.z || !e.target.closest('img')) return; p={x:e.clientX,y:e.clientY,tx:V.z.tx,ty:V.z.ty}; V.el.classList.add('pan'); try{ e.target.setPointerCapture(e.pointerId); }catch(_){} });
+  tr.addEventListener('pointermove', e => { if(!p || !V.z) return; V.z.tx=p.tx+(e.clientX-p.x); V.z.ty=p.ty+(e.clientY-p.y); vZoomApply(); });
+  const up = () => { p=null; V.el && V.el.classList.remove('pan'); };
+  tr.addEventListener('pointerup', up); tr.addEventListener('pointercancel', up);
+}
+
+// ---------- mini reproductor ----------
+const M = {id:null, v:null, url:null, ids:null, k:0};
+function miniStart(ids, k, v, url){
+  miniStop();
+  const id=ids[k], m=item(id);
+  M.id=id; M.v=v; M.url=url; M.ids=ids; M.k=k;
+  v.controls=false; v.removeAttribute('poster');
+  $('#miniV').replaceChildren(v);
+  $('#miniBg').style.backgroundImage = TH.get(id) ? `url("${TH.get(id)}")` : 'none';
+  $('#miniName').textContent = m ? fmtDate(m.date) : 'Video';
+  $('#miniSub').textContent = m ? m.name : '';
+  $('#mini').hidden=false; document.body.classList.add('mini-on');
+  v.onplay = v.onpause = miniIcon; v.onended = () => { miniIcon(); };
+  miniIcon();
+}
+function miniIcon(){ if(!M.v) return; const p=M.v.paused; $('#miniPlay').innerHTML = p?I.play:I.pause; $('#miniPlay').setAttribute('aria-label', p?'Reproducir':'Pausar'); }
+function miniStop(){ if(M.v){ M.v.pause(); M.v.remove(); } if(M.url) URL.revokeObjectURL(M.url); M.id=M.v=M.url=null; $('#mini').hidden=true; document.body.classList.remove('mini-on'); }
+$('#miniPlay').onclick = () => { if(!M.v) return; M.v.paused ? M.v.play().catch(()=>{}) : M.v.pause(); };
+$('#miniX').onclick = miniStop;
+const miniOpen = () => { if(!M.id) return; const ids=M.ids, k=M.k, t=M.v ? M.v.currentTime : 0; miniStop(); openViewer(ids, k, {resume:{k, t}}); };
+$('#miniV').onclick = miniOpen; $('#miniT').onclick = miniOpen;
+
+
+// ---------- ejemplos (fotos y videos dibujados, para probar) ----------
+function rng(seed){ return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const PALS = [
+  ['#1b1035','#ff6f61','#ffc46b','#fff1c1','#2a1530',0], ['#0b2a4a','#2f7fc1','#9fd3ff','#ffffff','#0e3b2e',0],
+  ['#05060f','#1c1f4a','#5b3b8c','#ffe7a3','#0a0a14',1], ['#3a0d2e','#c2416b','#ff9a76','#ffe0b5','#2b0f1f',0],
+  ['#0f3d3e','#3aa0a8','#bfe9e0','#ffffff','#123028',0], ['#2a1a0a','#a65a1d','#f2b366','#fff3d6','#3b2412',0],
+  ['#0a0f2a','#33307a','#e86f9a','#ffd1a6','#140f26',1], ['#132a1b','#4f8f5f','#d9efb4','#fffbe3','#0f2416',0],
+];
+function paintScene(ctx, w, h, k, t=0){
+  const P=PALS[k%PALS.length], r=rng(k*977+13), night=P[5];
+  const sky=ctx.createLinearGradient(0,0,0,h*.7); sky.addColorStop(0,P[0]); sky.addColorStop(.6,P[1]); sky.addColorStop(1,P[2]);
+  ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
+  if(night){ for(let i=0;i<140;i++){ ctx.globalAlpha=.3+r()*.7; ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(r()*w, r()*h*.55, r()*1.8+.3, 0, 7); ctx.fill(); } ctx.globalAlpha=1; }
+  const sx=w*(.25+r()*.5), sy=h*(.36+r()*.14) - t*h*.18, sr=Math.min(w,h)*(.07+r()*.06);
+  const glow=ctx.createRadialGradient(sx,sy,0,sx,sy,sr*6); glow.addColorStop(0,P[3]); glow.addColorStop(.15,P[3]+'cc'); glow.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=glow; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle=P[3]; ctx.beginPath(); ctx.arc(sx,sy,sr,0,7); ctx.fill();
+  for(let L=0;L<3;L++){
+    const base=h*(.55+L*.1), amp=h*(.12-L*.025);
+    ctx.fillStyle = P[4]; ctx.globalAlpha = L===2 ? 1 : .45+L*.22;
+    ctx.beginPath(); ctx.moveTo(0,h); let x=0, y=base - r()*amp;
+    ctx.lineTo(0,y);
+    while(x<w){ x+=w*(.06+r()*.12); y=base - r()*amp; ctx.lineTo(x,y); }
+    ctx.lineTo(w,h); ctx.closePath(); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  if(k%3===1){ const wy=h*.8; const wg=ctx.createLinearGradient(0,wy,0,h); wg.addColorStop(0,P[2]); wg.addColorStop(1,P[0]); ctx.fillStyle=wg; ctx.fillRect(0,wy,w,h-wy);
+    ctx.fillStyle=P[3]; ctx.globalAlpha=.5; for(let i=0;i<14;i++){ ctx.fillRect(sx-sr*(1.4-i*.07), wy+8+i*10, sr*(2.8-i*.14), 3); } ctx.globalAlpha=1; }
+  const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.3,w/2,h/2,Math.max(w,h)*.75); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.35)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,w,h);
+}
+async function sceneFile(k, date){
+  const port = k%3!==2, w=port?900:1200, h=port?1200:900;
+  const c=document.createElement('canvas'); c.width=w; c.height=h; paintScene(c.getContext('2d'), w, h, k);
+  const b=await toBlob(c,.86); const d=new Date(date);
+  return new File([b], `IMG_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}.jpg`, {type:'image/jpeg', lastModified:date});
+}
+function sceneVideo(k, date, secs=2.4){
+  return new Promise(res => {
+    try{
+      const w=540, h=960, c=document.createElement('canvas'); c.width=w; c.height=h; const ctx=c.getContext('2d');
+      if(!c.captureStream || !window.MediaRecorder) return res(null);
+      const mime = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].find(t => MediaRecorder.isTypeSupported(t));
+      if(!mime) return res(null);
+      const rec=new MediaRecorder(c.captureStream(30), {mimeType:mime, videoBitsPerSecond:1.5e6}); const parts=[];
+      rec.ondataavailable = e => e.data.size && parts.push(e.data);
+      rec.onstop = () => { const d=new Date(date); res(new File([new Blob(parts,{type:mime.split(';')[0]})], `VID_${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.${mime.includes('mp4')?'mp4':'webm'}`, {type:mime.split(';')[0], lastModified:date})); };
+      const t0=performance.now(); rec.start(200);
+      const step = () => { const t=Math.min(1,(performance.now()-t0)/(secs*1000)); paintScene(ctx,w,h,k,t); if(t<1) setTimeout(step, 33); else setTimeout(()=>rec.stop(), 60); };
+      step();
+    }catch(e){ res(null); }
+  });
+}
+async function makeSamples(){
+  toast('Creando ejemplos…', 0);
+  const DAY=864e5, now=Date.now();
+  const offs=[0,1,2,5,9,16,24,33,47,61,90,130,170,365,368,372];
+  const files=[];
+  for(let k=0;k<offs.length;k++) files.push(await sceneFile(k, now - offs[k]*DAY - (k*37%11)*3600e3));
+  const vids=[];
+  for(const [k,o] of [[0,3],[6,40]]){ const f=await sceneVideo(k, now-o*DAY); if(f) vids.push(f); }
+  const added = await addFiles([...files, ...vids], {sample:true, quiet:true, dur:2.4});
+  const imgs=added.filter(m=>m.type==='image');
+  const sunsets=imgs.filter((m,i)=>[0,3,6,9,12,15].includes(i)).map(m=>m.id);
+  const trip=imgs.filter((m,i)=>[1,4,7,10,13].includes(i)).map(m=>m.id).concat(added.filter(m=>m.type==='video').map(m=>m.id).slice(0,1));
+  const a1=newAlbum('Atardeceres', sunsets); a1.sample=true;
+  const a2=newAlbum('Viaje al sur', trip); a2.sample=true; saveAlbums();
+  for(const id of [imgs[0],imgs[5],imgs[12]].filter(Boolean).map(m=>m.id)){ const m=item(id); m.fav=true; await DB.put('items', id, m); }
+  refresh(); toast('Listo: estos son ejemplos. Los podés quitar desde tu perfil.', 4200);
+}
+
+// ---------- arranque ----------
+async function boot(){
+  $('#addBtn').innerHTML=I.plus;
+  document.querySelector('[data-tab="home"]').innerHTML=I.home+'<span>Inicio</span>';
+  document.querySelector('.nb[data-tab="lib"]').innerHTML=I.lib+'<span>Biblioteca</span>';
+  document.querySelector('.sbtn').innerHTML=I.search;
+  $('#miniX').innerHTML=I.x;
+  try{ await DB.open(); }catch(e){ DB.mem=true; }
+  try{
+    const metas=await DB.all('items');
+    const keys=await DB.keys('thumbs'), blobs=await DB.all('thumbs');
+    keys.forEach((k,i) => { if(blobs[i]) TH.set(k, URL.createObjectURL(blobs[i])); });
+    setItems(metas);
+  }catch(e){ DB.mem=true; setItems([]); }
+  S.albums.forEach(a => a.ids = a.ids || []);
+  renderTop(); renderMain();
+  if(DB.mem) toast('Este navegador no deja guardar: lo que agregues se pierde al cerrar.', 5000);
+  if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+  if('serviceWorker' in navigator && !inFrame && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+boot();
+})();
+</script>
+</body>
+</html>
