@@ -1022,7 +1022,7 @@ async function profileSheet(){
     <button class="opt" type="button" data-pr="priv"><span class="oi">${I.lock}</span><span>Carpeta privada<small>${natHas('auth')?'Con tu huella, tu cara o el bloqueo del celular':'Protegida con un PIN'}</small></span></button>
     ${samples?`<button class="opt" type="button" data-rs><span class="oi">${I.sparkle}</span><span>Quitar los ejemplos<small>${pl(samples,'elemento','elementos')} de prueba</small></span></button>`:''}
     ${S.items.length&&!NAT?`<button class="opt danger" type="button" data-all><span class="oi">${I.trash}</span><span>Borrar todo de Lumen<small>No toca la galería de tu celular</small></span></button>`:''}</div>
-    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v3.2</p>`,
+    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v3.3</p>`,
     (el, close) => {
       el.addEventListener('click', ev => { const b=ev.target.closest('[data-pr]'); if(!b) return; const k=b.dataset.pr; close(); setTimeout(() => k==='year' ? openYear(yearNow()) : k==='clean' ? openClean() : openPriv(), 60); });
       const pn=el.querySelector('#pn');
@@ -1877,7 +1877,7 @@ function aiBoxHTML(){
   if(a.ai==='ready'){
     const n=a.embedded||0, tot=a.total||S.items.length;
     if(a.phase==='ai' && n<tot) return `<div class="aibox glass slim"><span class="aic">${I.ai}</span><div><b>Analizando tus fotos</b><p>${n.toLocaleString('es-AR')} de ${tot.toLocaleString('es-AR')}. Ya podés buscar en las que están listas.</p><div class="aibar"><i style="width:${Math.round(n/Math.max(1,tot)*100)}%"></i></div></div></div>`;
-    if(a.phase==='hash') return `<div class="aibox glass slim"><span class="aic">${I.ai}</span><div><b>Preparando tus fotos</b><p>Enseguida empieza el análisis para la búsqueda inteligente.</p></div></div>`;
+    if(a.phase==='hash' && (a.hashed||0) < tot*0.98) return `<div class="aibox glass slim"><span class="aic">${I.ai}</span><div><b>Preparando tus fotos</b><p>Enseguida empieza el análisis para la búsqueda inteligente.</p></div></div>`;
     return '';
   }
   if(a.ai==='downloading') return `<div class="aibox glass"><span class="aic">${I.ai}</span><div><b>Descargando la búsqueda inteligente</b><p>${Math.round((a.dl||0)*100)} %. Podés seguir usando Lumen mientras tanto.</p><div class="aibar"><i style="width:${Math.round((a.dl||0)*100)}%"></i></div></div></div>`;
