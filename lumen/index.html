@@ -875,11 +875,14 @@ function searchResHTML(){
   const done = S.aiRes && S.aiRes.q===q;
   if(aiOn){
     if(done){
-      smart = S.aiRes.ids.length ? `<div class="mhead"><h3>${I.ai}Por lo que aparece</h3><span>${countLabel(S.aiRes.ids)}</span></div>${gridChunkHTML(S.aiRes.ids,'ai')}`
-                                 : `<p class="note">La búsqueda inteligente no encontró “${esc(S.q.trim())}” en tus fotos.</p>`;
+      const mb = S.aiRes.maybe||[], a=S.ai||{}, tot=a.total||S.items.length, emb=a.embedded||0;
+      smart = (S.aiRes.ids.length ? `<div class="mhead"><h3>${I.ai}Por lo que aparece</h3><span>${countLabel(S.aiRes.ids)}</span></div>${gridChunkHTML(S.aiRes.ids,'ai')}`
+                                 : `<p class="note">La búsqueda inteligente no encontró “${esc(S.q.trim())}” en tus fotos.</p>`)
+        + (mb.length ? `<div class="mhead"><h3>Puede que también estén acá</h3><span>${countLabel(mb)}</span></div>${gridChunkHTML(mb,'aim')}` : '')
+        + (emb && emb < tot*0.98 ? `<p class="note">Lumen analizó ${emb.toLocaleString('es-AR')} de ${tot.toLocaleString('es-AR')} fotos y videos. Los que faltan todavía no aparecen acá: el análisis sigue cuando tenés Lumen abierta.</p>` : '');
     } else { smart = `<p class="note">${I.ai.replace('<svg','<svg style="width:16px;height:16px;vertical-align:-2px;color:var(--a1)"')} Buscando “${esc(S.q.trim())}” en tus fotos…</p>`; aiSearch(S.q); }
   }
-  const aiSet = done ? new Set(S.aiRes.ids) : null;
+  const aiSet = done ? new Set([...S.aiRes.ids, ...(S.aiRes.maybe||[])]) : null;
   const txtIds = aiSet ? res.filter(id=>!aiSet.has(id)) : res;
   const txt = txtIds.length ? `<div class="mhead"><h3>${aiOn?'Por nombre, fecha o álbum':'Resultados'}</h3><span>${countLabel(txtIds)}</span></div>${gridChunkHTML(txtIds,'sr')}` : '';
   if(!smart && !txt) return `<p class="note">No encontramos nada con “${esc(S.q.trim())}”. Probá con un mes, un año o el nombre de un álbum.</p>`;
@@ -1019,7 +1022,7 @@ async function profileSheet(){
     <button class="opt" type="button" data-pr="priv"><span class="oi">${I.lock}</span><span>Carpeta privada<small>${natHas('auth')?'Con tu huella, tu cara o el bloqueo del celular':'Protegida con un PIN'}</small></span></button>
     ${samples?`<button class="opt" type="button" data-rs><span class="oi">${I.sparkle}</span><span>Quitar los ejemplos<small>${pl(samples,'elemento','elementos')} de prueba</small></span></button>`:''}
     ${S.items.length&&!NAT?`<button class="opt danger" type="button" data-all><span class="oi">${I.trash}</span><span>Borrar todo de Lumen<small>No toca la galería de tu celular</small></span></button>`:''}</div>
-    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v3.1</p>`,
+    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v3.2</p>`,
     (el, close) => {
       el.addEventListener('click', ev => { const b=ev.target.closest('[data-pr]'); if(!b) return; const k=b.dataset.pr; close(); setTimeout(() => k==='year' ? openYear(yearNow()) : k==='clean' ? openClean() : openPriv(), 60); });
       const pn=el.querySelector('#pn');
@@ -1898,7 +1901,11 @@ function aiSearch(q){
 }
 function aiDone(nq, r){
   if(!r || r.error) S.aiRes={q:nq, ids:[], en:'', err:true};
-  else { const ids=(r.results||[]).map(([k])=>{ const [t,n]=k.split(':'); return t+n; }).filter(id=>S.byId.has(id) && !S.priv.has(id)); S.aiRes={q:nq, ids, en:r.en||''}; }
+  else {
+    const ok = id => S.byId.has(id) && !S.priv.has(id), idOf = k => { const [t,n]=k.split(':'); return t+n; };
+    const rs = r.results||[];
+    S.aiRes={q:nq, ids: rs.filter(x=>!x[2]).map(x=>idOf(x[0])).filter(ok), maybe: rs.filter(x=>x[2]).map(x=>idOf(x[0])).filter(ok), en:r.en||''};
+  }
   if(S.tab==='search' && norm(S.q).trim()===nq) searchPaint();
 }
 window.__lumenNative2 = (ev, a, b) => {
