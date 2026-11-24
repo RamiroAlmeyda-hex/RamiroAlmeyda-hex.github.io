@@ -152,7 +152,7 @@ body.mini-on main{padding-bottom:calc(210px + var(--sb))}
 
 /* ---------- barra de abajo ---------- */
 .nav{position:fixed;left:16px;right:16px;bottom:calc(14px + var(--sb));z-index:30;display:flex;justify-content:center;gap:10px;max-width:520px;margin:0 auto}
-.pill{position:relative;flex:none;width:calc(100% - 76px);height:66px;border-radius:33px;display:flex;padding:5px;overflow:hidden;transition:width .55s cubic-bezier(.34,1.56,.64,1)}
+.pill{position:relative;flex:none;width:calc(100% - 76px);height:66px;border-radius:33px;display:flex;padding:5px;overflow:hidden}
 .pill .bub{position:absolute;z-index:2;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:28px;background:rgba(255,255,255,.14);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 2px 10px rgba(0,0,0,.25);transition:transform .45s cubic-bezier(.3,1.35,.5,1),opacity .25s}
 .pill[data-on="lib"] .bub{transform:translateX(100%)}
@@ -523,7 +523,7 @@ $('#sub').addEventListener('click', e => {
   if(e.target.closest('[data-act="select"]')){ S.sel ? selEnd() : selStart(); }
 });
 function setTab(t){ if(S.sel) selEnd(); $('#nav').classList.remove('small'); S.tab=t; renderTop(); renderMain(); window.scrollTo(0,0); if(t==='search') setTimeout(()=>{ const q=$('#q'); if(q && !('ontouchstart' in window)) q.focus(); }, 50); }
-$('#nav').addEventListener('click', e => { const b=e.target.closest('[data-tab]'); if(!b) return; if($('#nav').classList.contains('small') && b.closest('.pill')){ $('#nav').classList.remove('small'); return; } if(b.dataset.tab===S.tab) window.scrollTo({top:0,behavior:reduce()?'auto':'smooth'}); else setTab(b.dataset.tab); });
+$('#nav').addEventListener('click', e => { const b=e.target.closest('[data-tab]'); if(!b) return; if(b.dataset.tab===S.tab) window.scrollTo({top:0,behavior:reduce()?'auto':'smooth'}); else setTab(b.dataset.tab); });
 
 // ---------- piezas de la interfaz ----------
 const tileHTML = (id, ctx, i) => { const m=item(id); const t=TH.get(id);
@@ -745,7 +745,7 @@ async function profileSheet(){
     <p style="margin-top:14px">Tus fotos y videos se guardan solo en este celular. Si desinstalás Lumen o borrás los datos del navegador, se pierden las copias de Lumen (los originales siguen en tu galería).</p>
     <div>${samples?`<button class="opt" type="button" data-rs><span class="oi">${I.sparkle}</span><span>Quitar los ejemplos<small>${pl(samples,'elemento','elementos')} de prueba</small></span></button>`:''}
     ${S.items.length?`<button class="opt danger" type="button" data-all><span class="oi">${I.trash}</span><span>Borrar todo de Lumen<small>No toca la galería de tu celular</small></span></button>`:''}</div>
-    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v1.1</p>`,
+    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v1.2</p>`,
     (el, close) => {
       const pn=el.querySelector('#pn');
       pn.addEventListener('input', () => { S.name=pn.value.slice(0,40); LS.set('lumen.name', S.name); renderTop(); if(S.tab==='home') renderMain(); });
@@ -1086,11 +1086,6 @@ const LQ = (() => {
   function scan(){ if(!ok) return; document.querySelectorAll(SEL).forEach(n => { if(!n._lqo){ n._lqo=1; ro.observe(n); upd(n); } }); }
   if(ok){ let q=0; new MutationObserver(() => { if(q) return; q=1; requestAnimationFrame(()=>{ q=0; scan(); }); setTimeout(()=>{ if(q){ q=0; scan(); } }, 120); }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']}); }
   return {scan, ok};
-})();
-// al bajar la barra se achica; al subir vuelve
-(() => { let lastY=scrollY, acc=0; const nav=$('#nav');
-  addEventListener('scroll', () => { const y=scrollY, dy=y-lastY; lastY=y; acc=((dy>0)===(acc>0)?acc:0)+dy;
-    if(y<120) nav.classList.remove('small'); else if(acc>40) nav.classList.add('small'); else if(acc<-30) nav.classList.remove('small'); }, {passive:true});
 })();
 
 // ---------- arranque ----------
