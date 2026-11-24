@@ -527,6 +527,15 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
   </div>
 </div>
 <style>
+/* ---- comprobante compartido desde otra app ---- */
+.shbox .row h2{font-size:1.05rem}
+.shbox .wiz-x{flex:none}
+.shimg{display:block;width:100%;border:0;padding:0;background:var(--surface-2);border-radius:12px;overflow:hidden;cursor:zoom-in}
+.shimg img{display:block;width:100%;height:26vh;object-fit:cover;object-position:top}
+.shimg::after{content:"Tocá para verlo entero";display:block;padding:6px;font-size:.75rem;font-weight:600;color:var(--muted);text-align:center}
+.shimg.big{cursor:zoom-out}.shimg.big img{height:auto;object-fit:contain}.shimg.big::after{content:"Tocá para achicarlo"}
+</style>
+<style>
 /* ---- encabezado con botón de ayuda ---- */
 .top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"brand month help";align-items:center;gap:10px}
 .top .brand{grid-area:brand;min-width:0}
@@ -796,6 +805,11 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
 
   <div class="cols">
     <div style="display:grid;gap:20px;min-width:0">
+      <section class="panel shbox" id="shBox" data-tab="anotar" hidden aria-labelledby="h-sh">
+        <div class="row"><h2 id="h-sh">Comprobante compartido</h2><button class="wiz-x" type="button" id="shClose" aria-label="Quitar el comprobante">✕</button></div>
+        <p class="hint" id="shMsg" style="margin:0;font-size:.88rem"></p>
+        <button type="button" class="shimg" id="shImgBtn" aria-label="Agrandar el comprobante" hidden><img id="shImg" alt="Comprobante compartido"></button>
+      </section>
       <form class="panel" id="form" data-tab="anotar" autocomplete="off">
         <div class="row" style="flex-wrap:wrap"><h2>Anotar</h2><button class="btn ghost small ipmini" type="button" id="ipOpen2"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>Importar resumen</button></div>
         <div class="seg" role="group" aria-label="Tipo de movimiento">
@@ -895,7 +909,7 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
 </nav>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.19</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.20</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
@@ -1227,6 +1241,7 @@ $('form').addEventListener('submit', async e=>{
     $('f-amt').value=''; $('f-note').value='';
     if(!m.date.startsWith(state.month)){ state.month=m.date.slice(0,7); draw(); }
     msg.className='ok'; msg.textContent = (m.type==='in'?'Ingreso':'Gasto')+' de '+money(amount)+' anotado.';
+    if(!$('shBox').hidden) shClose();
   }catch(err){ msg.className='hint'; msg.textContent='No se pudo guardar. Probá de nuevo en un momento.'; }
 });
 
@@ -1687,7 +1702,7 @@ const IPX = (() => {
     return parseLines(merged, opt);
   }
 
-  return {parseLines, parseTable, parseCSV, parsePasted, suggest, keys, pretty, dateAt, tail, cellNum, cleanDesc, kindOf, nrm, up};
+  return {parseLines, parseTable, parseCSV, parsePasted, suggest, keys, pretty, dateAt, datesIn, amounts, tail, cellNum, cleanDesc, kindOf, nrm, up};
 })();
 
 // ---------- importar gastos de la tarjeta (pantalla) ----------
@@ -2056,6 +2071,62 @@ $('ipNext').onclick = () => {
   }
 };
 document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('imp').hidden) ipClose(); });
+
+
+// ---------- comprobante compartido desde otra app (Compartir → Rinde) ----------
+function shParse(text){
+  const L = String(text||'').split(/\n+/).map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+  let amount = null, date = null, who = '';
+  for(let i=0;i<L.length && amount==null;i++) if(/transfer|enviaste|pagaste|monto|importe|total|pago/i.test(L[i]))
+    for(const x of [L[i], L[i+1]||'']){ const a = IPX.amounts(x).filter(a=>a.v>0 && a.cur!=='USD'); if(a.length){ amount=a[0].v; break; } }
+  if(amount==null){ const a = L.flatMap(x=>IPX.amounts(x)).filter(a=>a.v>0 && a.cur!=='USD'); if(a.length) amount = Math.max(...a.map(a=>a.v)); }
+  for(const x of L){ const d = IPX.datesIn(x,'dmy')[0]; if(d){ date = d.y+'-'+pad(d.m)+'-'+pad(d.d); break; } }
+  for(let i=0;i<L.length && !who;i++){
+    let m = /^(?:para|destinatario|beneficiario|a nombre de|le transferiste a|enviaste a|cuenta destino|cuenta de destino)\s*:?\s*(.*)$/i.exec(L[i]);
+    if(m) who = (m[1] || L[i+1] || '').trim();
+    else if((m = /transferiste.*?\s+a\s+([A-Za-zÁÉÍÓÚÑáéíóúñ][^$\d]{1,40})$/i.exec(L[i]))) who = m[1].trim();
+    who = who.replace(/^(NX|MP|N X)\s+/,'');
+    if(/^\d[\d\s-]{6,}$/.test(who)) who='';
+  }
+  who = who.replace(/\s*(cvu|cbu|alias|cuit|cuil)\b.*$/i,'').slice(0,40);
+  return {amount, date, note: who ? 'Transferencia a '+IPX.pretty(who) : (amount ? 'Transferencia' : ''), who};
+}
+function shClose(){ $('shBox').hidden = true; const i=$('shImg'); if(i.src){ try{ URL.revokeObjectURL(i.src); }catch(e){} i.removeAttribute('src'); } }
+async function shCheck(){
+  if(!/[?&]compartido=1/.test(location.search)) return;
+  try{ history.replaceState(history.state, '', location.pathname); }catch(e){}
+  let file = null, text = '';
+  try{
+    const c = await caches.open('rinde-share');
+    const r = await c.match('/__compartido');
+    if(r){ const b = await r.blob(); if(b.size) file = new File([b], decodeURIComponent(r.headers.get('x-name')||'comprobante'), {type: r.headers.get('content-type') || b.type || ''}); }
+    const t = await c.match('/__compartido-texto'); if(t) text = await t.text();
+    await caches.delete('rinde-share');
+  }catch(e){}
+  if(!file && !text) return;
+  setType('out'); showTab('anotar', {hist:false, scroll:false});
+  $('shBox').hidden = false;
+  const isImg = file && /^image\//.test(file.type);
+  $('shImgBtn').hidden = !isImg; $('shImgBtn').classList.remove('big');
+  if(isImg) $('shImg').src = URL.createObjectURL(file);
+  $('shMsg').textContent = 'Leyendo el comprobante…';
+  let f = null;
+  try{
+    if(file && (file.type==='application/pdf' || /\.pdf$/i.test(file.name))) f = shParse((await ipPdfLines(file)).map(l=>l.text).join('\n') + '\n' + text);
+    else if(text) f = shParse(text);
+  }catch(e){}
+  if(f && f.amount) $('f-amt').value = f.amount.toLocaleString('es-AR', {maximumFractionDigits:2});
+  if(f && f.note) $('f-note').value = f.note.slice(0,80);
+  if(f && f.date) $('f-date').value = f.date;
+  if(f && f.who){ const b = IPX.suggest(f.who, 'gasto', state.buckets, ipRules()); if(b) $('f-bucket').value = b; }
+  $('shMsg').textContent = f && f.amount
+    ? 'Ya completamos el monto y el detalle. Revisalos, elegí el sobre y tocá Agregar gasto.'
+    : 'Mirá el monto en el comprobante, escribilo abajo, elegí el sobre y tocá Agregar gasto.';
+  window.scrollTo(0,0);
+  if(!(f && f.amount)) setTimeout(() => $('f-amt').focus({preventScroll:true}), 350);
+}
+$('shClose').onclick = shClose;
+$('shImgBtn').onclick = () => $('shImgBtn').classList.toggle('big');
 
 // ---------- asistente de porcentajes ----------
 // Rinde Pro: cuando exista, la versión gratis puede limitar los gastos fijos cambiando este número.
@@ -2645,6 +2716,7 @@ draw();
 
 store = localStore();
 store.start(render.onCfg, render.onMovs);
+shCheck();
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
 })();
 </script>
