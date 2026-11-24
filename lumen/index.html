@@ -37,12 +37,17 @@ img,video{display:block}
 svg{flex:none}
 
 /* ---------- vidrio ---------- */
-.glass{background:linear-gradient(160deg,rgba(255,255,255,.17),rgba(255,255,255,.05) 55%,rgba(255,255,255,.09));
-  -webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);
-  border:1px solid rgba(255,255,255,.17);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 1px rgba(255,255,255,.07),0 12px 34px rgba(0,0,0,.5);isolation:isolate}
-.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:-1;
-  background:radial-gradient(130% 80% at 18% -10%,rgba(255,255,255,.2),transparent 55%)}
+.glass{--tint:rgba(20,20,28,.34);background:var(--tint);
+  -webkit-backdrop-filter:blur(14px) saturate(170%);backdrop-filter:blur(14px) saturate(170%);
+  box-shadow:0 16px 36px -14px rgba(0,0,0,.6),0 2px 6px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.24),inset 0 -1px 0 rgba(255,255,255,.06);isolation:isolate}
+/* borde de luz: más fuerte arriba a la izquierda y abajo a la derecha */
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;z-index:2;
+  background:linear-gradient(160deg,rgba(255,255,255,.4) 0%,rgba(255,255,255,.07) 30%,rgba(255,255,255,0) 55%,rgba(255,255,255,.1) 80%,rgba(255,255,255,.3) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+/* reflejo suave arriba */
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;background:radial-gradient(120% 70% at 30% 0%,rgba(255,255,255,.12),rgba(255,255,255,0) 55%)}
+.glass>*:not(.bub):not(.mbg):not(.paused-ic){position:relative;z-index:3}
+.glass.lq-on{-webkit-backdrop-filter:var(--lq);backdrop-filter:var(--lq)}
 .ib{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none}
 .ib svg{width:22px;height:22px}
 .avatar{background:var(--grad);color:#1d0d12;font-weight:800;font-size:1.1rem}
@@ -146,20 +151,28 @@ body.mini-on main{padding-bottom:calc(210px + var(--sb))}
 .credit b{font-size:1.15rem;color:var(--fg);font-weight:700}
 
 /* ---------- barra de abajo ---------- */
-.nav{position:fixed;left:16px;right:16px;bottom:calc(14px + var(--sb));z-index:30;display:flex;gap:10px;max-width:520px;margin:0 auto}
-.pill{position:relative;flex:1;height:66px;border-radius:33px;display:grid;grid-template-columns:1fr 1fr;padding:5px}
-.pill .bub{position:absolute;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:28px;background:rgba(255,255,255,.14);
+.nav{position:fixed;left:16px;right:16px;bottom:calc(14px + var(--sb));z-index:30;display:flex;justify-content:center;gap:10px;max-width:520px;margin:0 auto}
+.pill{position:relative;flex:none;width:calc(100% - 76px);height:66px;border-radius:33px;display:flex;padding:5px;overflow:hidden;transition:width .55s cubic-bezier(.34,1.56,.64,1)}
+.pill .bub{position:absolute;z-index:2;top:5px;bottom:5px;left:5px;width:calc(50% - 5px);border-radius:28px;background:rgba(255,255,255,.14);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 2px 10px rgba(0,0,0,.25);transition:transform .45s cubic-bezier(.3,1.35,.5,1),opacity .25s}
 .pill[data-on="lib"] .bub{transform:translateX(100%)}
 .pill[data-on="search"] .bub{opacity:0}
-.nb{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.76rem;font-weight:600;color:var(--mu);border-radius:28px}
-.nb svg{width:25px;height:25px}
+.nb{position:relative;z-index:1;flex:1;min-width:0;transition:opacity .25s;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:.76rem;font-weight:600;color:var(--mu);border-radius:28px}
+.nb svg{width:25px;height:25px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35))}
+.nb,.sbtn,.mini .mt{text-shadow:0 1px 3px rgba(0,0,0,.45)}
 .nb[aria-current="page"],.sbtn[aria-current="page"]{color:var(--acc)}
 .sbtn{position:relative;width:66px;height:66px;border-radius:50%;flex:none;display:grid;place-items:center;color:var(--mu)}
 .sbtn svg{width:26px;height:26px}
 body.selecting .nav,body.selecting .mini{display:none!important}
+.nav.small .pill{width:66px}
+.nav.small .bub{opacity:0!important}
+.nav.small .nb span{display:none}
+.nav.small .nb:not([aria-current="page"]){opacity:0;pointer-events:none;flex:0 0 0;overflow:hidden}
+.nav.small .pill[data-on="search"] .nb[data-tab="home"]{opacity:1;pointer-events:auto;flex:1}
+.pill:active,.sbtn:active{transform:scale(1.04)}
+.sbtn{transition:transform .35s cubic-bezier(.34,1.56,.64,1)}
 .mini{position:fixed;left:26px;right:26px;max-width:500px;margin:0 auto;bottom:calc(92px + var(--sb));z-index:29;height:64px;border-radius:32px;display:flex;align-items:center;gap:12px;padding:0 8px 0 8px;overflow:hidden}
-.mini .mbg{position:absolute;inset:-30px;background-size:cover;background-position:center;filter:blur(26px) saturate(170%);opacity:.6;z-index:-2}
+.mini .mbg{position:absolute;inset:0;border-radius:inherit;background-size:cover;background-position:center;filter:blur(20px) saturate(170%);opacity:.45;z-index:0;overflow:hidden}
 .mini .mv{width:48px;height:48px;border-radius:50%;overflow:hidden;flex:none;background:#000}
 .mini .mv video{width:100%;height:100%;object-fit:cover}
 .mini .mt{flex:1;text-align:left;display:grid;min-width:0}
@@ -252,6 +265,7 @@ body.selecting .toast{bottom:calc(96px + var(--sb))}
   <symbol id="lumono" viewBox="0 0 64 64"><circle cx="32" cy="32" r="21" fill="none" stroke="#fff" stroke-width="9"/><circle cx="41.5" cy="22.5" r="6.5" fill="#fff"/></symbol>
   <g id="mkmono" fill="none" stroke="currentColor" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><path d="M703 140.5L915.2 263L915.2 508L703 630.5L490.8 508L490.8 263L703 140.5Z"/><path d="M703 243L824.2 313L824.2 453L703 523L581.8 453L581.8 313L703 243Z"/><path d="M490.8 263L581.8 313"/><path d="M915.2 263L824.2 313"/><path d="M490.8 508L581.8 453"/><path d="M915.2 508L824.2 453"/><path d="M703 140.5L703 383"/><path d="M703 523L703 630.5"/><path d="M703 140.5L581.8 313"/><path d="M703 140.5L824.2 313"/><path d="M703 630.5L581.8 453"/><path d="M703 630.5L824.2 453"/><path d="M490.8 508L581.8 313"/><path d="M915.2 508L824.2 313"/><path d="M581.8 453L824.2 313"/><path d="M703 383L824.2 453"/><path d="M703 140.5Q769.8 269.7 915.2 263"/><path d="M915.2 263Q836.7 385.5 915.2 508"/><path d="M915.2 508Q769.8 501.3 703 630.5"/><path d="M703 630.5Q636.2 501.3 490.8 508"/><path d="M490.8 508Q569.3 385.5 490.8 263"/><path d="M490.8 263Q636.2 269.7 703 140.5"/><path d="M585 388A118 78 0 1 0 821 388A118 78 0 1 0 585 388Z"/></g>
 </defs></svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs id="lqfx"></defs></svg>
 
 <header class="top" id="top">
   <div class="row">
@@ -508,8 +522,8 @@ $('#sub').addEventListener('click', e => {
   if(c){ if(S.tab==='home') S.chip=c.dataset.chip; else { S.libChip=c.dataset.chip; if(S.libChip==='albums' && S.sel) selEnd(); } renderTop(); renderMain(); return; }
   if(e.target.closest('[data-act="select"]')){ S.sel ? selEnd() : selStart(); }
 });
-function setTab(t){ if(S.sel) selEnd(); S.tab=t; renderTop(); renderMain(); window.scrollTo(0,0); if(t==='search') setTimeout(()=>{ const q=$('#q'); if(q && !('ontouchstart' in window)) q.focus(); }, 50); }
-$('#nav').addEventListener('click', e => { const b=e.target.closest('[data-tab]'); if(!b) return; if(b.dataset.tab===S.tab) window.scrollTo({top:0,behavior:reduce()?'auto':'smooth'}); else setTab(b.dataset.tab); });
+function setTab(t){ if(S.sel) selEnd(); $('#nav').classList.remove('small'); S.tab=t; renderTop(); renderMain(); window.scrollTo(0,0); if(t==='search') setTimeout(()=>{ const q=$('#q'); if(q && !('ontouchstart' in window)) q.focus(); }, 50); }
+$('#nav').addEventListener('click', e => { const b=e.target.closest('[data-tab]'); if(!b) return; if($('#nav').classList.contains('small') && b.closest('.pill')){ $('#nav').classList.remove('small'); return; } if(b.dataset.tab===S.tab) window.scrollTo({top:0,behavior:reduce()?'auto':'smooth'}); else setTab(b.dataset.tab); });
 
 // ---------- piezas de la interfaz ----------
 const tileHTML = (id, ctx, i) => { const m=item(id); const t=TH.get(id);
@@ -731,7 +745,7 @@ async function profileSheet(){
     <p style="margin-top:14px">Tus fotos y videos se guardan solo en este celular. Si desinstalás Lumen o borrás los datos del navegador, se pierden las copias de Lumen (los originales siguen en tu galería).</p>
     <div>${samples?`<button class="opt" type="button" data-rs><span class="oi">${I.sparkle}</span><span>Quitar los ejemplos<small>${pl(samples,'elemento','elementos')} de prueba</small></span></button>`:''}
     ${S.items.length?`<button class="opt danger" type="button" data-all><span class="oi">${I.trash}</span><span>Borrar todo de Lumen<small>No toca la galería de tu celular</small></span></button>`:''}</div>
-    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v1.0</p>`,
+    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v1.1</p>`,
     (el, close) => {
       const pn=el.querySelector('#pn');
       pn.addEventListener('input', () => { S.name=pn.value.slice(0,40); LS.set('lumen.name', S.name); renderTop(); if(S.tab==='home') renderMain(); });
@@ -1024,6 +1038,61 @@ async function makeSamples(){
   refresh(); toast('Listo: estos son ejemplos. Los podés quitar desde tu perfil.', 4200);
 }
 
+// ---------- vidrio líquido: refracción en los bordes ----------
+const LQ = (() => {
+  const ua=navigator.userAgent, iOS=/iPhone|iPad|iPod/.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const ok=/Chrome\/|Chromium\//.test(ua) && !iOS && !/Firefox\//.test(ua) && !!window.ResizeObserver && !reduce();
+  const NS='http://www.w3.org/2000/svg', fx=document.getElementById('lqfx'), made=new Map();
+  const BLUR=4, SCALE=30, SAT=1.6;
+  const SEL='.pill,.sbtn,.mini,.selbar,.vbot,.vtop .ib,#addBtn,.ch .ib,.cbar .ib,.mem .play,.toast';
+  // mapa de desplazamiento: en el borde empuja la imagen de atrás hacia afuera, como una lente
+  function map(w,h,r,band){
+    const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'), im=g.createImageData(w,h), d=im.data;
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++){
+      const px=x+.5, py=y+.5, qx=Math.min(Math.max(px,r),w-r), qy=Math.min(Math.max(py,r),h-r), vx=px-qx, vy=py-qy, len=Math.hypot(vx,vy);
+      let dist, nx, ny;
+      if(len>0){ dist=r-len; nx=vx/len; ny=vy/len; }
+      else { const l=px, rr=w-px, t=py, b=h-py, m=Math.min(l,rr,t,b); dist=m+r; if(m===l){nx=-1;ny=0}else if(m===rr){nx=1;ny=0}else if(m===t){nx=0;ny=-1}else{nx=0;ny=1} }
+      let s=0; if(dist>=0){ const k=Math.min(1,Math.max(0,1-dist/band)); s=1-Math.sqrt(1-k*k); }
+      const i=(y*w+x)*4; d[i]=128-nx*s*127; d[i+1]=128-ny*s*127; d[i+2]=128; d[i+3]=255;
+    }
+    g.putImageData(im,0,0); return c.toDataURL();
+  }
+  const mk=(tag,at,par)=>{ const e=document.createElementNS(NS,tag); for(const k in at) e.setAttribute(k,at[k]); par.appendChild(e); return e; };
+  function filter(w,h,r){
+    const key=w+'x'+h+'r'+r; if(made.has(key)) return made.get(key);
+    const id='lq'+made.size;
+    const f=mk('filter',{id, x:0, y:0, width:w, height:h, filterUnits:'userSpaceOnUse', primitiveUnits:'userSpaceOnUse', 'color-interpolation-filters':'sRGB'}, fx);
+    mk('feGaussianBlur',{in:'SourceGraphic', stdDeviation:BLUR, result:'b'}, f);
+    mk('feImage',{x:0, y:0, width:w, height:h, result:'map', preserveAspectRatio:'none', href:map(w,h,r,Math.min(r+6,h/2,w/2))}, f);
+    // tres canales con desplazamiento apenas distinto: separa un poco los colores en el borde
+    [['R','1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0',1],['G','0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0',.94],['B','0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0',.88]].forEach(p => {
+      mk('feDisplacementMap',{in:'b', in2:'map', scale:SCALE*p[2], xChannelSelector:'R', yChannelSelector:'G', result:'d'+p[0]}, f);
+      mk('feColorMatrix',{in:'d'+p[0], type:'matrix', values:p[1], result:'c'+p[0]}, f);
+    });
+    mk('feComposite',{in:'cR', in2:'cG', operator:'arithmetic', k2:1, k3:1, result:'rg'}, f);
+    mk('feComposite',{in:'rg', in2:'cB', operator:'arithmetic', k2:1, k3:1, result:'rgb'}, f);
+    mk('feColorMatrix',{in:'rgb', type:'saturate', values:SAT}, f);
+    const v='url(#'+id+')'; made.set(key,v); return v;
+  }
+  function upd(node){
+    const b=node.getBoundingClientRect(), w=Math.round(b.width), h=Math.round(b.height); if(!w||!h) return;
+    const cr=parseFloat(getComputedStyle(node).borderTopLeftRadius)||0, r=Math.round(Math.min(cr||h/2, w/2, h/2));
+    const k=w+'x'+h+'r'+r; if(node._lq===k) return; node._lq=k;
+    node.style.setProperty('--lq', filter(w,h,r)); node.classList.add('lq-on');
+  }
+  // mientras la barra cambia de tamaño espera a que termine, así no recalcula en cada cuadro
+  const ro = ok ? new ResizeObserver(es => es.forEach(e => { const n=e.target; clearTimeout(n._lqt); n._lqt=setTimeout(()=>upd(n), n._lq ? 160 : 0); })) : null;
+  function scan(){ if(!ok) return; document.querySelectorAll(SEL).forEach(n => { if(!n._lqo){ n._lqo=1; ro.observe(n); upd(n); } }); }
+  if(ok){ let q=0; new MutationObserver(() => { if(q) return; q=1; requestAnimationFrame(()=>{ q=0; scan(); }); setTimeout(()=>{ if(q){ q=0; scan(); } }, 120); }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden']}); }
+  return {scan, ok};
+})();
+// al bajar la barra se achica; al subir vuelve
+(() => { let lastY=scrollY, acc=0; const nav=$('#nav');
+  addEventListener('scroll', () => { const y=scrollY, dy=y-lastY; lastY=y; acc=((dy>0)===(acc>0)?acc:0)+dy;
+    if(y<120) nav.classList.remove('small'); else if(acc>40) nav.classList.add('small'); else if(acc<-30) nav.classList.remove('small'); }, {passive:true});
+})();
+
 // ---------- arranque ----------
 async function boot(){
   $('#addBtn').innerHTML=I.plus;
@@ -1039,7 +1108,7 @@ async function boot(){
     setItems(metas);
   }catch(e){ DB.mem=true; setItems([]); }
   S.albums.forEach(a => a.ids = a.ids || []);
-  renderTop(); renderMain();
+  renderTop(); renderMain(); LQ.scan();
   if(DB.mem) toast('Este navegador no deja guardar: lo que agregues se pierde al cerrar.', 5000);
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if('serviceWorker' in navigator && !inFrame && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
