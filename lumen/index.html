@@ -138,6 +138,8 @@ body.mini-on main{padding-bottom:calc(210px + var(--sb))}
 .empty{margin-top:22px;border-radius:28px;padding:30px 24px;position:relative;overflow:hidden;
   background:radial-gradient(120% 90% at 100% 0%,rgba(180,92,255,.35),transparent 60%),radial-gradient(120% 90% at 0% 100%,rgba(255,138,91,.35),transparent 60%),var(--s1);border:1px solid rgba(255,255,255,.1)}
 .empty .lg{width:72px;height:72px}
+.pnote{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;padding:10px 10px 10px 18px;border-radius:22px;font-size:.92rem}
+.pnote button{flex:none;height:38px;padding:0 14px;border-radius:19px;background:#fff;color:#0b0b0f;font-weight:700}
 .empty h2{font-size:2rem;line-height:1.05;letter-spacing:-.025em;margin:18px 0 10px;font-weight:800;text-wrap:balance}
 .empty p{color:rgba(255,255,255,.78);margin:0 0 22px;max-width:46ch}
 .btn{height:50px;border-radius:25px;padding:0 22px;font-weight:700;background:#fff;color:#0b0b0f;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap}
@@ -374,7 +376,32 @@ const CHIPS = [['all','Todo'],['img','Fotos'],['vid','Videos'],['fav','Favoritos
 const byDate = (a,b) => b.date-a.date || b.added-a.added;
 const item = id => S.byId.get(id);
 const saveAlbums = () => LS.set('lumen.albums', S.albums);
-const thumb = id => TH.get(id) || PH;
+const thumb = id => tget(id) || PH;
+// ---------- app nativa: lee la galería del celular sin copiarla ----------
+const NAT = window.LumenNative || null;
+const natUrl = (kind, m) => `__m/${kind}/${m.t}/${m.nid}`;
+const tget = id => { const m=item(id); return m && m.nid ? natUrl('thumb', m) : TH.get(id); };
+let natFav = new Set(LS.get('lumen.nfav', []));
+const natPending = {};
+const FOLDER = {'camera':'Cámara','dcim':'Cámara','100andro':'Cámara','screenshots':'Capturas de pantalla','screenshot':'Capturas de pantalla','whatsapp images':'WhatsApp','whatsapp video':'Videos de WhatsApp',
+  'whatsapp animated gifs':'GIF de WhatsApp','whatsapp documents':'Documentos de WhatsApp','download':'Descargas','downloads':'Descargas','pictures':'Imágenes','instagram':'Instagram','telegram':'Telegram','telegram images':'Telegram',
+  'facebook':'Facebook','messenger':'Messenger','tiktok':'TikTok','movies':'Películas','screen recordings':'Grabaciones de pantalla','screenrecorder':'Grabaciones de pantalla','screenrecords':'Grabaciones de pantalla','bluetooth':'Bluetooth','edited':'Editadas','snapseed':'Snapseed','capcut':'CapCut'};
+const fname = b => FOLDER[norm(b)] || b;
+function folders(){ const g=new Map(); S.items.forEach(m => { if(!m.bucket) return; if(!g.has(m.bucket)) g.set(m.bucket,[]); g.get(m.bucket).push(m.id); }); return [...g.entries()].sort((a,b)=>b[1].length-a[1].length); }
+const natMap = r => ({id:r.t+r.i, nid:r.i, t:r.t, type:r.t==='v'?'video':'image', name:r.n||'', date:r.d||0, added:0, size:r.s||0, w:r.w||0, h:r.h||0, dur:(r.u||0)/1000, bucket:r.b||'', fav:natFav.has(r.t+r.i)});
+function natLoad(force){
+  try{ S.perm = NAT.perm(); }catch(e){ S.perm='none'; }
+  if(S.perm==='none'){ S.natSig=''; setItems([]); refresh(); return; }
+  let list=[]; try{ list=JSON.parse(NAT.list()||'[]'); }catch(e){}
+  const sig = S.perm+':'+list.length+':'+list.reduce((a,r)=>Math.max(a,r.d||0),0);
+  if(!force && sig===S.natSig) return;
+  S.natSig=sig; setItems(list.map(natMap)); refresh();
+}
+window.__lumenNative = (ev, a, b) => {
+  if(ev==='perm'){ S.permBlocked = !!b && a==='none'; natLoad(true); }
+  else if(ev==='resume'){ if(!stack.length && !S.sel) natLoad(); }
+  else if(ev==='trash'){ const r=natPending.trash; natPending.trash=null; if(r) r(a); }
+};
 function setItems(list){ S.items = list.sort(byDate); S.byId = new Map(list.map(m=>[m.id,m])); }
 const countLabel = ids => { let v=0,f=0; ids.forEach(id=>{ const m=item(id); if(!m) return; m.type==='video'?v++:f++; });
   return [f?pl(f,'foto','fotos'):'', v?pl(v,'video','videos'):''].filter(Boolean).join(' · ') || 'Vacío'; };
@@ -442,7 +469,15 @@ const pickFiles = () => $('#pick').click();
 
 // ---------- borrar / favoritos / compartir ----------
 async function delItems(ids){
+  const nat = ids.filter(id => item(id) && item(id).nid);
+  if(nat.length){
+    // la app manda a la papelera del celular (Android pide confirmación)
+    const ok = await new Promise(res => { natPending.trash=res; try{ NAT.trash(JSON.stringify(nat.map(id => { const m=item(id); return m.t+':'+m.nid; }))); }catch(e){ res(false); } });
+    if(ok!==true){ if(ok==='unsupported') toast('En esta versión de Android, borralo desde la galería del celular.'); return false; }
+    nat.forEach(id => { natFav.delete(id); if(M.id===id) miniStop(); }); LS.set('lumen.nfav', [...natFav]);
+  }
   for(const id of ids){
+    if(item(id) && item(id).nid) continue;
     await DB.del('files',id); await DB.del('thumbs',id); await DB.del('items',id);
     const u=TH.get(id); if(u){ URL.revokeObjectURL(u); TH.delete(id); }
     if(M.id===id) miniStop();
@@ -451,12 +486,16 @@ async function delItems(ids){
   S.albums.forEach(a => a.ids = a.ids.filter(x => !set.has(x))); saveAlbums();
   setItems(S.items.filter(m => !set.has(m.id)));
   refresh();
+  return true;
 }
 async function setFav(ids, val){
-  for(const id of ids){ const m=item(id); if(!m) continue; m.fav = val===undefined ? !m.fav : val; await DB.put('items', id, m); }
+  for(const id of ids){ const m=item(id); if(!m) continue; m.fav = val===undefined ? !m.fav : val;
+    if(m.nid){ m.fav ? natFav.add(id) : natFav.delete(id); } else await DB.put('items', id, m); }
+  if(NAT) LS.set('lumen.nfav', [...natFav]);
   refresh();
 }
 async function shareIds(ids){
+  if(NAT){ const keys=ids.map(item).filter(m=>m&&m.nid).map(m=>m.t+':'+m.nid); if(keys.length){ try{ NAT.share(JSON.stringify(keys)); }catch(e){ toast('No se pudo compartir.'); } return; } }
   try{
     const files=[];
     for(const id of ids){ const b=await DB.get('files',id), m=item(id); if(b) files.push(new File([b], m.name||'lumen', {type:b.type||m.mime||''})); }
@@ -526,7 +565,7 @@ function setTab(t){ if(S.sel) selEnd(); $('#nav').classList.remove('small'); S.t
 $('#nav').addEventListener('click', e => { const b=e.target.closest('[data-tab]'); if(!b) return; if(b.dataset.tab===S.tab) window.scrollTo({top:0,behavior:reduce()?'auto':'smooth'}); else setTab(b.dataset.tab); });
 
 // ---------- piezas de la interfaz ----------
-const tileHTML = (id, ctx, i) => { const m=item(id); const t=TH.get(id);
+const tileHTML = (id, ctx, i) => { const m=item(id); const t=tget(id);
   return `<button class="tile${S.sel&&S.sel.has(id)?' on':''}" type="button" data-ctx="${ctx}" data-i="${i}" data-id="${id}" aria-label="${m.type==='video'?'Video':'Foto'} del ${esc(fmtDate(m.date))}">
     ${t?`<img src="${t}" alt="" loading="lazy" decoding="async">`:`<span class="nf">${m.type==='video'?'VIDEO':'FOTO'}</span>`}
     ${m.type==='video'?`<span class="vd">${I.play}${m.dur?dur(m.dur):''}</span>`:''}${m.fav?`<span class="fv">${I.heartF}</span>`:''}<span class="ck">${I.check}</span></button>`; };
@@ -537,13 +576,19 @@ function renderMain(){
   const main=$('#main');
   main.classList.toggle('selmode', !!S.sel);
   if(S.tab==='home') main.innerHTML = homeHTML();
-  else if(S.tab==='lib') main.innerHTML = libHTML();
+  else if(S.tab==='lib'){ main.innerHTML = libHTML(); libObserve(); }
   else main.innerHTML = searchHTML();
 }
 function refresh(){ renderTop(); renderMain(); refreshers.forEach(f=>f()); if(S.sel) renderSel(); }
 const refreshers = new Set();
 
 function homeHTML(){
+  if(!S.items.length && NAT) return `<section class="empty">
+      <div class="lg">${mk()}</div>
+      <h2>${S.perm==='none'?'Mostrá tus fotos en Lumen':'Todavía no hay fotos'}</h2>
+      <p>${S.perm==='none'?'Para ver tu galería, Lumen necesita permiso para leer tus fotos y videos. No se suben a ningún lado: todo queda en tu celular.':'No encontramos fotos ni videos en este celular.'}</p>
+      ${S.perm==='none'?`<div class="btns"><button class="btn" type="button" data-act="${S.permBlocked?'settings':'perm'}">${S.permBlocked?'Abrir ajustes':'Permitir acceso a mis fotos'}</button></div>${S.permBlocked?'<p style="margin:16px 0 0;font-size:.9rem">Android ya no muestra el aviso. En Ajustes tocá <b>Permisos → Fotos y videos → Permitir todo</b>.</p>':''}`:''}
+    </section>${credit()}`;
   if(!S.items.length) return `<section class="empty">
       <div class="lg">${mk()}</div>
       <h2>Tu galería, con luz propia</h2>
@@ -552,14 +597,15 @@ function homeHTML(){
     </section>${credit()}`;
   const list = S.items.filter(F[S.chip]);
   if(!list.length) return `<p class="note">${S.chip==='fav'?'Todavía no marcaste favoritos. Abrí una foto y tocá el corazón.':S.chip==='vid'?'Todavía no agregaste videos.':'Todavía no agregaste fotos.'}</p>${credit()}`;
-  let out='';
+  let out = NAT && S.perm==='partial' ? `<div class="pnote glass"><span>Lumen ve solo las fotos que elegiste.</span><button type="button" data-act="perm">Elegir más</button></div>` : '';
   if(S.chip==='all'){
     const q=[];
     if(S.items.some(F.fav)) q.push(`<button class="qt" type="button" data-coll="fav"><span class="qi g-fav">${I.heartF}</span><b>Tus favoritos</b></button>`);
     if(S.items.some(F.vid)) q.push(`<button class="qt" type="button" data-coll="vid"><span class="qi g-vid">${I.play}</span><b>Tus videos</b></button>`);
     S.albums.forEach(a => { if(q.length>=6) return; const c=albumCover(a); q.push(`<button class="qt" type="button" data-album="${a.id}">${c?`<img class="qi" src="${c}" alt="">`:`<span class="qi" style="background:var(--s3)">${I.album}</span>`}<b>${esc(a.name)}</b></button>`); });
+    if(NAT) folders().forEach(([b,ids]) => { if(q.length<6) q.push(`<button class="qt" type="button" data-folder="${esc(b)}"><img class="qi" src="${thumb(ids[0])}" alt=""><b>${esc(fname(b))}</b></button>`); });
     if(q.length<6) q.push(`<button class="qt" type="button" data-act="newalbum"><span class="qi" style="background:var(--s3)">${I.plus}</span><b>Nuevo álbum</b></button>`);
-    if(q.length%2) q.push(`<button class="qt" type="button" data-act="add"><span class="qi" style="background:var(--s3)">${I.image}</span><b>Agregar más</b></button>`);
+    if(q.length%2 && !NAT) q.push(`<button class="qt" type="button" data-act="add"><span class="qi" style="background:var(--s3)">${I.image}</span><b>Agregar más</b></button>`);
     out += `<div class="quick">${q.join('')}</div>`;
   }
   const mems = memories(list);
@@ -579,6 +625,7 @@ function homeHTML(){
       ${S.albums.map(a=>{ const c=albumCover(a); return `<button class="card" type="button" data-album="${a.id}"><span class="cv">${c?`<img src="${c}" alt="" loading="lazy">`:`<span class="newc">${I.album}</span>`}</span><b>${esc(a.name)}</b><span>${countLabel(albumIds(a))}</span></button>`; }).join('')}
       <button class="card" type="button" data-act="newalbum"><span class="cv"><span class="newc">${I.plus}</span></span><b>Nuevo álbum</b><span>Juntá tus fotos</span></button>
     </div></section>`;
+    if(NAT){ const fs=folders(); if(fs.length) out += `<section class="sec"><h2>Carpetas del celular</h2><div class="rail">${fs.slice(0,14).map(([b,ids])=>`<button class="card" type="button" data-folder="${esc(b)}"><span class="cv"><img src="${thumb(ids[0])}" alt="" loading="lazy"></span><b>${esc(fname(b))}</b><span>${countLabel(ids)}</span></button>`).join('')}</div></section>`; }
     const vids = S.items.filter(F.vid);
     if(vids.length){ CTX.hv = vids.map(m=>m.id);
       out += `<section class="sec"><div class="hrow"><h2>Tus videos</h2><button class="lnk" type="button" data-coll="vid">Ver todos</button></div><div class="rail">${vids.slice(0,12).map((m,i)=>`
@@ -591,22 +638,39 @@ function homeHTML(){
 }
 
 function libHTML(){
-  if(!S.items.length) return `<p class="note">Tu biblioteca está vacía. Tocá <b>+</b> arriba para agregar fotos y videos.</p>`;
+  if(!S.items.length) return NAT ? homeHTML() : `<p class="note">Tu biblioteca está vacía. Tocá <b>+</b> arriba para agregar fotos y videos.</p>`;
   if(S.libChip==='albums'){
     return `<div class="rows" style="margin-top:14px">
       <button class="arow" type="button" data-act="newalbum"><span class="ac">${I.plus}</span><span><b>Nuevo álbum</b><span>Juntá fotos y videos</span></span></button>
       ${S.items.some(F.fav)?`<button class="arow" type="button" data-coll="fav"><span class="ac g-fav" style="color:#fff">${I.heartF}</span><span><b>Tus favoritos</b><span>Colección · ${countLabel(S.items.filter(F.fav).map(m=>m.id))}</span></span></button>`:''}
       ${S.albums.map(a=>{ const c=albumCover(a); return `<button class="arow" type="button" data-album="${a.id}"><span class="ac">${c?`<img src="${c}" alt="" loading="lazy">`:I.album}</span><span><b>${esc(a.name)}</b><span>Álbum · ${countLabel(albumIds(a))}</span></span></button>`; }).join('')}
+      ${NAT ? folders().map(([b,ids])=>`<button class="arow" type="button" data-folder="${esc(b)}"><span class="ac"><img src="${thumb(ids[0])}" alt="" loading="lazy"></span><span><b>${esc(fname(b))}</b><span>Carpeta · ${countLabel(ids)}</span></span></button>`).join('') : ''}
     </div>`;
   }
   const list = S.items.filter(F[S.libChip]);
   if(!list.length) return `<p class="note">No hay nada acá todavía.</p>`;
   CTX.lib = list.map(m=>m.id);
-  let out='', i=0, k=null, buf=[];
-  const flush = () => { if(!buf.length) return; out += `<div class="mhead"><h3>${mLabel(k)}</h3><span>${countLabel(buf.map(x=>x.id))}</span></div><div class="grid">${buf.map(x=>tileHTML(x.id,'lib',x.i)).join('')}</div>`; buf=[]; };
-  list.forEach(m => { const mk2=mKey(m.date); if(mk2!==k){ flush(); k=mk2; } buf.push({id:m.id,i:i++}); });
-  flush();
-  return out;
+  const parts=[], totals=new Map(); let k=null, cur=null;
+  list.forEach((m,i) => { const mk2=mKey(m.date);
+    if(!totals.has(mk2)) totals.set(mk2,[]); totals.get(mk2).push(m.id);
+    if(mk2!==k){ k=mk2; cur={k, head:true, items:[]}; parts.push(cur); } else if(cur.items.length>=240){ cur={k, head:false, items:[]}; parts.push(cur); }
+    cur.items.push({id:m.id, i}); });
+  LIB={parts, pi:0, totals};
+  return libMore() + (LIB.pi<parts.length ? '<div id="libMore" style="height:2px"></div>' : '');
+}
+// la biblioteca se dibuja de a partes mientras bajás, así no se traba con miles de fotos
+let LIB=null, libIO=null;
+function libMore(){ let out='', n=0;
+  while(LIB.pi<LIB.parts.length && n<360){ const p=LIB.parts[LIB.pi++];
+    out += (p.head?`<div class="mhead"><h3>${mLabel(p.k)}</h3><span>${countLabel(LIB.totals.get(p.k))}</span></div>`:'') + `<div class="grid"${p.head?'':' style="margin-top:3px"'}>${p.items.map(x=>tileHTML(x.id,'lib',x.i)).join('')}</div>`; n+=p.items.length; }
+  return out; }
+function libObserve(){
+  if(libIO){ libIO.disconnect(); libIO=null; }
+  const s=$('#libMore'); if(!s) return;
+  const fill = () => { while(LIB.pi<LIB.parts.length && s.isConnected && s.getBoundingClientRect().top < innerHeight+1400) s.insertAdjacentHTML('beforebegin', libMore());
+    if(LIB.pi>=LIB.parts.length){ if(libIO) libIO.disconnect(); s.remove(); } };
+  libIO = new IntersectionObserver(es => { if(es.some(e=>e.isIntersecting)) fill(); }, {rootMargin:'1400px 0px'});
+  libIO.observe(s);
 }
 
 function searchHTML(){
@@ -621,7 +685,7 @@ function searchHTML(){
   const inAlb = new Map(); S.albums.forEach(a => a.ids.forEach(id => inAlb.set(id, (inAlb.get(id)||'')+' '+a.name)));
   const res = S.items.filter(m => {
     const d=new Date(m.date);
-    const hay = norm([m.name, d.toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}), d.toLocaleDateString('es-AR',{weekday:'long'}),
+    const hay = norm([m.name, m.bucket||'', m.bucket?fname(m.bucket):'', d.toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}), d.toLocaleDateString('es-AR',{weekday:'long'}),
       m.type==='video'?'video videos':'foto fotos imagen', m.fav?'favorito favoritos':'', inAlb.get(m.id)||''].join(' '));
     return words.every(w => hay.includes(w) || (w.length>3 && hay.includes(w.replace(/s$/,''))));
   }).map(m=>m.id);
@@ -637,6 +701,8 @@ function onContentClick(e){
   const a=t.closest('[data-act]');
   if(a){ const act=a.dataset.act;
     if(act==='add') return pickFiles();
+    if(act==='perm'){ try{ NAT.ask(); }catch(e){} return; }
+    if(act==='settings'){ try{ NAT.settings(); }catch(e){} return; }
     if(act==='samples') return makeSamples();
     if(act==='newalbum') return askAlbumName('', name => { const al=newAlbum(name); refresh(); openColl({kind:'album', id:al.id}); });
     if(act==='tolib') return setTab('lib');
@@ -646,6 +712,7 @@ function onContentClick(e){
   const mp=t.closest('[data-memplay]'); if(mp){ const c=S.mems[+mp.dataset.memplay]; return openViewer(c.ids, 0, {show:true}); }
   const me=t.closest('[data-mem]'); if(me){ const c=S.mems[+me.dataset.mem]; return openColl({kind:'mem', title:c.title, ids:c.ids}); }
   const al=t.closest('[data-album]'); if(al) return openColl({kind:'album', id:al.dataset.album});
+  const fo=t.closest('[data-folder]'); if(fo) return openColl({kind:'folder', name:fo.dataset.folder});
   const co=t.closest('[data-coll]'); if(co) return openColl({kind:co.dataset.coll});
   const tl=t.closest('[data-ctx]');
   if(tl){
@@ -723,6 +790,11 @@ function pickAlbum(ids, after){
     }));
 }
 function confirmDel(ids, after){
+  if(NAT && ids.every(id => item(id) && item(id).nid)){
+    // Android muestra su propio aviso para confirmar
+    delItems(ids).then(ok => { if(ok){ toast(ids.length===1?'Se mandó a la papelera':'Se mandaron a la papelera'); after&&after(); } });
+    return;
+  }
   sheet(`<h3>¿Borrar ${countLabel(ids).toLowerCase()}?</h3><p>Se borran de Lumen. Las fotos y videos originales siguen en la galería de tu celular.</p>
     <div class="btns"><button class="btn ghost" type="button" data-c>Cancelar</button><button class="btn danger" type="button" data-ok>Borrar</button></div>`,
     (el, close) => { el.querySelector('[data-c]').onclick=close; el.querySelector('[data-ok]').onclick = async () => { close(); await delItems(ids); toast('Borrado'); after&&after(); }; });
@@ -732,7 +804,7 @@ function infoSheet(id){
   const al=S.albums.filter(a=>a.ids.includes(id)).map(a=>a.name).join(', ');
   sheet(`<h3>Información</h3><dl class="kv">
     <dt>Nombre</dt><dd>${esc(m.name)}</dd><dt>Fecha</dt><dd>${esc(cap(fmtLong(m.date)))}</dd>
-    <dt>Tipo</dt><dd>${m.type==='video'?'Video':'Foto'}</dd>${m.w?`<dt>Tamaño</dt><dd>${m.w} × ${m.h}</dd>`:''}
+    ${m.bucket?`<dt>Carpeta</dt><dd>${esc(fname(m.bucket))}</dd>`:''}<dt>Tipo</dt><dd>${m.type==='video'?'Video':'Foto'}</dd>${m.w?`<dt>Tamaño</dt><dd>${m.w} × ${m.h}</dd>`:''}
     ${m.dur?`<dt>Duración</dt><dd>${dur(m.dur)}</dd>`:''}<dt>Ocupa</dt><dd>${mb(m.size)}</dd>${al?`<dt>Álbumes</dt><dd>${esc(al)}</dd>`:''}</dl>
     <div class="btns"><button class="btn" type="button" data-c>Listo</button></div>`, (el, close) => el.querySelector('[data-c]').onclick=close);
 }
@@ -742,10 +814,10 @@ async function profileSheet(){
   const samples=S.items.filter(m=>m.sample).length;
   sheet(`<div class="prof"><span class="avatar">${S.name?esc(S.name.trim().charAt(0).toUpperCase()):I.user}</span><div><h3 style="margin:0">${esc(S.name||'Tu perfil')}</h3><span style="color:var(--mu)">${countLabel(S.items.map(m=>m.id))}${used?' · '+used:''}</span></div></div>
     <label style="display:grid;gap:8px;font-weight:600">¿Cómo te llamás?<input class="field" id="pn" maxlength="40" placeholder="Tu nombre" value="${esc(S.name)}" autocomplete="given-name"></label>
-    <p style="margin-top:14px">Tus fotos y videos se guardan solo en este celular. Si desinstalás Lumen o borrás los datos del navegador, se pierden las copias de Lumen (los originales siguen en tu galería).</p>
+    ${NAT?'<p style="margin-top:14px">Lumen muestra las fotos y videos de tu celular sin copiarlos ni subirlos a ningún lado. Tus favoritos y álbumes se guardan en Lumen.</p>':'<p style="margin-top:14px">Tus fotos y videos se guardan solo en este celular. Si desinstalás Lumen o borrás los datos del navegador, se pierden las copias de Lumen (los originales siguen en tu galería).</p>'}
     <div>${samples?`<button class="opt" type="button" data-rs><span class="oi">${I.sparkle}</span><span>Quitar los ejemplos<small>${pl(samples,'elemento','elementos')} de prueba</small></span></button>`:''}
-    ${S.items.length?`<button class="opt danger" type="button" data-all><span class="oi">${I.trash}</span><span>Borrar todo de Lumen<small>No toca la galería de tu celular</small></span></button>`:''}</div>
-    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v1.3</p>`,
+    ${S.items.length&&!NAT?`<button class="opt danger" type="button" data-all><span class="oi">${I.trash}</span><span>Borrar todo de Lumen<small>No toca la galería de tu celular</small></span></button>`:''}</div>
+    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v2.0</p>`,
     (el, close) => {
       const pn=el.querySelector('#pn');
       pn.addEventListener('input', () => { S.name=pn.value.slice(0,40); LS.set('lumen.name', S.name); renderTop(); if(S.tab==='home') renderMain(); });
@@ -758,12 +830,13 @@ $('#addBtn').onclick = pickFiles;
 
 // ---------- colección (álbum, recuerdo, favoritos, videos) ----------
 function collIds(c){
+  if(c.kind==='folder') return S.items.filter(m=>m.bucket===c.name).map(m=>m.id);
   if(c.kind==='album'){ const a=S.albums.find(x=>x.id===c.id); return a ? albumIds(a) : []; }
   if(c.kind==='fav') return S.items.filter(F.fav).map(m=>m.id);
   if(c.kind==='vid') return S.items.filter(F.vid).map(m=>m.id);
   return c.ids.filter(id=>S.byId.has(id));
 }
-function collTitle(c){ if(c.kind==='album'){ const a=S.albums.find(x=>x.id===c.id); return a?a.name:'Álbum'; } return c.kind==='fav'?'Tus favoritos':c.kind==='vid'?'Tus videos':c.title; }
+function collTitle(c){ if(c.kind==='folder') return fname(c.name); if(c.kind==='album'){ const a=S.albums.find(x=>x.id===c.id); return a?a.name:'Álbum'; } return c.kind==='fav'?'Tus favoritos':c.kind==='vid'?'Tus videos':c.title; }
 function openColl(c){
   const el=h(`<div class="ov" role="dialog" aria-modal="true"></div>`);
   document.body.append(el);
@@ -774,7 +847,7 @@ function openColl(c){
     el.setAttribute('aria-label', title);
     el.innerHTML = `<div class="ch">${ids.length?`<img src="${thumb(ids[0])}" alt="">`:'<div class="ph"></div>'}
         <button class="ib glass back" type="button" data-x aria-label="Volver">${I.back}</button>
-        <div class="tx"><h2>${esc(title)}</h2><span>${c.kind==='album'?'Álbum':c.kind==='mem'?'Recuerdo':'Colección'} · ${countLabel(ids)}</span></div></div>
+        <div class="tx"><h2>${esc(title)}</h2><span>${c.kind==='album'?'Álbum':c.kind==='mem'?'Recuerdo':c.kind==='folder'?'Carpeta del celular':'Colección'} · ${countLabel(ids)}</span></div></div>
       <div class="cbar">${ids.length?`<button class="gplay" type="button" data-play aria-label="Ver como presentación">${I.play}</button>`:''}
         ${c.kind==='album'?`<button class="ib glass" type="button" data-addin aria-label="Agregar fotos al álbum">${I.plus}</button><span class="sp"></span><button class="ib glass" type="button" data-more aria-label="Más opciones del álbum">${I.more}</button>`:'<span class="sp"></span>'}</div>
       <main>${ids.length?gridHTML(ids, ctx):`<p class="note">Este álbum está vacío. Tocá <b>+</b> para sumarle fotos y videos de tu biblioteca.</p>`}</main>`;
@@ -808,6 +881,7 @@ function openColl(c){
 const V = {el:null, ids:[], i:0, show:false, urls:new Map(), z:null, timer:null, paused:false, t0:0, resume:null};
 function openViewer(ids, i, opt={}){
   if(!ids || !ids.length) return;
+  if(ids.length>1500){ const st=Math.max(0, Math.min(i-750, ids.length-1500)); ids=ids.slice(st, st+1500); i-=st; }
   V.ids=ids.slice(); V.i=Math.max(0,Math.min(i,ids.length-1)); V.show=!!opt.show; V.resume=opt.resume||null; V.paused=false;
   const el=h(`<div class="vw${V.show?' show':''}" role="dialog" aria-modal="true" aria-label="Visor de fotos">
     <div class="vtrack">${V.ids.map((_,k)=>`<div class="slide" data-k="${k}"></div>`).join('')}</div>
@@ -848,13 +922,17 @@ function openViewer(ids, i, opt={}){
 function slideEl(k){ return V.el && V.el.querySelector(`.slide[data-k="${k}"]`); }
 async function vFill(k){
   const sl=slideEl(k); if(!sl || sl.dataset.f) return; sl.dataset.f='1';
-  const id=V.ids[k], m=item(id); const blob = m && await DB.get('files', id);
-  if(!V.el || slideEl(k)!==sl || !sl.dataset.f) return;
-  if(!blob){ sl.innerHTML='<p class="err">No se encontró este archivo.</p>'; return; }
-  const url=URL.createObjectURL(blob); V.urls.set(k,url);
+  const id=V.ids[k], m=item(id); let url;
+  if(m && m.nid) url = natUrl('file', m);
+  else {
+    const blob = m && await DB.get('files', id);
+    if(!V.el || slideEl(k)!==sl || !sl.dataset.f) return;
+    if(!blob){ sl.innerHTML='<p class="err">No se encontró este archivo.</p>'; return; }
+    url=URL.createObjectURL(blob); V.urls.set(k,url);
+  }
   if(m.type==='video'){
     sl.classList.add('v');
-    sl.innerHTML=`<video src="${url}" controls playsinline preload="metadata" poster="${TH.get(id)||''}"></video>`;
+    sl.innerHTML=`<video src="${url}" controls playsinline preload="metadata" poster="${tget(id)||''}"></video>`;
     const vid=sl.querySelector('video');
     vid.addEventListener('ended', () => { if(V.show && k===V.i) vNext(); });
     if(k===V.i) vPlayCurrent();
@@ -952,7 +1030,7 @@ function miniStart(ids, k, v, url){
   M.id=id; M.v=v; M.url=url; M.ids=ids; M.k=k;
   v.controls=false; v.removeAttribute('poster');
   $('#miniV').replaceChildren(v);
-  $('#miniBg').style.backgroundImage = TH.get(id) ? `url("${TH.get(id)}")` : 'none';
+  $('#miniBg').style.backgroundImage = tget(id) ? `url("${tget(id)}")` : 'none';
   $('#miniName').textContent = m ? fmtDate(m.date) : 'Video';
   $('#miniSub').textContent = m ? m.name : '';
   $('#mini').hidden=false; document.body.classList.add('mini-on');
@@ -1095,6 +1173,13 @@ async function boot(){
   document.querySelector('.nb[data-tab="lib"]').innerHTML=I.lib+'<span>Biblioteca</span>';
   document.querySelector('.sbtn').innerHTML=I.search;
   $('#miniX').innerHTML=I.x;
+  if(NAT){
+    $('#addBtn').hidden=true;
+    S.albums.forEach(a => a.ids = a.ids || []);
+    natLoad(true); LQ.scan();
+    if('serviceWorker' in navigator && location.protocol==='https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+    return;
+  }
   try{ await DB.open(); }catch(e){ DB.mem=true; }
   try{
     const metas=await DB.all('items');
