@@ -1,0 +1,40 @@
+name: Traer el lector de texto (OCR)
+
+on:
+  workflow_dispatch:
+  push:
+    paths: [".github/workflows/ocr.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  ocr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Bajar Tesseract.js y el idioma español
+        run: |
+          set -e
+          mkdir -p /tmp/p && cd /tmp/p
+          npm pack tesseract.js@5.1.1 tesseract.js-core@5.1.1 @tesseract.js-data/spa
+          for f in *.tgz; do d="${f%.tgz}"; mkdir -p "$d"; tar -xzf "$f" -C "$d"; done
+          find . -maxdepth 4 | grep -v node_modules | sort | head -80
+          D="$GITHUB_WORKSPACE/vendor/ocr"; rm -rf "$D"; mkdir -p "$D/core" "$D/lang"
+          cp tesseract.js-5.1.1/package/dist/tesseract.min.js tesseract.js-5.1.1/package/dist/worker.min.js "$D/"
+          cp tesseract.js-5.1.1/package/LICENSE* "$D/" || true
+          cp tesseract.js-core-5.1.1/package/*lstm* "$D/core/"
+          L=$(find . -path "*best_int*" -name "spa.traineddata.gz" | head -1)
+          [ -n "$L" ] || L=$(find . -name "spa.traineddata.gz" | head -1)
+          cp "$L" "$D/lang/spa.traineddata.gz"
+          ls -la "$D" "$D/core" "$D/lang"
+      - name: Guardar en el sitio
+        run: |
+          git config user.name "rinde-bot"
+          git config user.email "rinde-bot@users.noreply.github.com"
+          git add vendor/ocr
+          git commit -m "Lector de texto (Tesseract.js 5.1.1, español) para comprobantes"
+          git push
