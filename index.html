@@ -393,6 +393,140 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
   </div>
 </div>
 <style>
+/* ---- importar gastos de la tarjeta ---- */
+.ipmini{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.ipcta{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 14px;align-items:center}
+.ipcta .ic{grid-row:1/3;width:46px;height:46px;border-radius:14px;background:var(--surface-2);display:grid;place-items:center;color:var(--fg)}
+.ipcta h2{font-size:1.05rem}
+.ipcta p{margin:0;color:var(--muted);font-size:.88rem}
+.ipcta .btn{grid-column:1/-1;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.ip-drop{display:grid;justify-items:center;gap:6px;text-align:center;width:100%;padding:26px 16px;border:2px dashed var(--line);border-radius:18px;background:var(--surface);color:var(--fg)}
+.ip-drop:hover,.ip-drop.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))}
+.ip-drop:disabled{opacity:.55;cursor:progress}
+.ip-drop .ic{width:54px;height:54px;border-radius:16px;background:var(--ink);color:var(--ink-fg);display:grid;place-items:center;margin-bottom:4px}
+.ip-drop b{font-family:var(--f-display);font-size:1.15rem;font-weight:700}
+.ip-drop small{color:var(--muted);font-size:.85rem}
+.ip-status{display:flex;gap:10px;align-items:flex-start;font-size:.88rem;padding:11px 13px;border-radius:12px;background:var(--surface-2)}
+.ip-status.err{background:var(--bad-soft);color:var(--fg);border:1px solid var(--bad)}
+.ip-status .spin{flex:none;width:16px;height:16px;margin-top:2px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--ink);animation:ipspin .8s linear infinite}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ip-status .spin{border-top-color:var(--accent)}}
+@keyframes ipspin{to{transform:rotate(360deg)}}
+.ip-pw{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.ip-pw .btn{height:44px}
+.ip-paste,.ip-how{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:0 14px}
+.ip-paste summary,.ip-how summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 0;font-weight:600}
+.ip-paste summary::-webkit-details-marker,.ip-how summary::-webkit-details-marker{display:none}
+.ip-paste summary::after,.ip-how summary::after{content:"›";color:var(--muted);font-size:1.3rem;line-height:1;transition:transform .2s}
+.ip-paste[open] summary::after,.ip-how[open] summary::after{transform:rotate(90deg)}
+.ip-paste>div,.ip-how>div{display:grid;gap:10px;padding:0 0 14px}
+.ip-paste textarea{width:100%;min-height:120px;resize:vertical;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:500 .88rem/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--fg)}
+.ip-how ul{margin:0;padding-left:1.15em;display:grid;gap:6px;font-size:.9rem}
+.ip-lock{display:flex;gap:8px;align-items:center;margin:0;font-size:.82rem;color:var(--muted)}
+.ip-lock svg{flex:none;color:var(--good)}
+.ip-card{margin:0;font-size:.88rem;color:var(--muted)}
+.ip-card b{color:var(--fg)}
+.ip-box{display:grid;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.ip-box p{margin:0;font-size:.9rem}
+.ip-box.warn{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.ip-bulk{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center}
+.ip-tools{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.85rem;color:var(--muted)}
+.ip-tools button{border:0;background:none;color:var(--fg);font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:6px 0}
+.ip-list{display:grid;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0 12px}
+.ip-row{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px 0 12px;border-bottom:1px solid var(--line);position:relative}
+.ip-row:last-child{border-bottom:0}
+.ip-row input[type=checkbox]{width:22px;height:22px;margin:0;padding:0;accent-color:var(--ink);align-self:start;margin-top:2px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ip-row input[type=checkbox]{accent-color:var(--accent)}}
+.ip-row .t{display:grid;gap:1px;min-width:0;font-size:inherit;color:inherit;cursor:pointer}
+.ip-row .t b{font-weight:600;overflow-wrap:anywhere;color:var(--fg)}
+.ip-row .t small{color:var(--muted);font-size:.78rem;font-weight:500}
+.ip-row .t em{font-style:normal;font-size:.76rem;font-weight:600;color:var(--bad)}
+.ip-row .amt{font-weight:700;align-self:start;white-space:nowrap}
+.ip-row select{grid-column:2/-1;padding:7px 10px;font-size:.86rem;border-left:5px solid var(--c,var(--line))}
+.ip-row select.need{border-color:var(--accent);border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--bg))}
+.ip-row.off .t,.ip-row.off .amt,.ip-row.off select{opacity:.45}
+.ip-done{display:grid;justify-items:center;text-align:center;gap:8px;padding:24px 0 8px}
+.ip-done .okc{width:64px;height:64px;border-radius:50%;background:var(--good);color:#fff;display:grid;place-items:center;font-size:1.8rem;font-weight:800}
+.ip-done p{margin:0;color:var(--muted);max-width:36ch}
+</style>
+<div class="wiz" id="imp" hidden role="dialog" aria-modal="true" aria-labelledby="ipT1">
+  <div class="wiz-back" id="ipBackdrop"></div>
+  <div class="wiz-sheet">
+    <header class="wiz-head">
+      <div class="wiz-steps" aria-hidden="true"><i></i><i></i><i></i><span id="ipStepLbl">Paso 1 de 3</span></div>
+      <button class="wiz-x" type="button" id="ipClose" aria-label="Cerrar">✕</button>
+    </header>
+    <div class="wiz-body" id="ipBody">
+      <section data-ip="1">
+        <h2 id="ipT1" tabindex="-1">Importar gastos de la tarjeta</h2>
+        <p class="hint" style="font-size:.9rem;margin:0">Elegí el resumen de tu tarjeta en PDF, o el Excel o CSV de movimientos que bajás del banco. Antes de anotar, revisás todo.</p>
+        <button type="button" class="ip-drop" id="ipPick">
+          <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg></span>
+          <b>Elegir el resumen</b>
+          <small>PDF, Excel (.xlsx) o CSV</small>
+        </button>
+        <input type="file" id="ipFile" accept=".pdf,.csv,.txt,.xlsx,.xls,application/pdf,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" hidden>
+        <div class="ip-pw" id="ipPw" hidden>
+          <label for="ipPwIn">Este resumen tiene contraseña
+            <input id="ipPwIn" type="password" autocomplete="off" placeholder="Muchas veces es tu DNI">
+          </label>
+          <button class="btn small" type="button" id="ipPwGo">Abrir</button>
+        </div>
+        <div class="ip-status" id="ipStatus" role="status" aria-live="polite" hidden></div>
+        <details class="ip-paste" id="ipPasteBox">
+          <summary>O pegá los movimientos</summary>
+          <div>
+            <p class="hint" style="margin:0;font-size:.85rem">Copiá la lista de consumos desde la app o la web del banco y pegala acá.</p>
+            <textarea id="ipText" aria-label="Movimientos pegados" placeholder="12/11/25  SUPERMERCADO DIA   8.456,00"></textarea>
+            <button class="btn ghost small" type="button" id="ipTextGo" style="justify-self:start">Leer lo que pegué</button>
+          </div>
+        </details>
+        <details class="ip-how">
+          <summary>¿De dónde saco el resumen?</summary>
+          <div><ul>
+            <li>En la app de tu banco o de la tarjeta, entrá a <b>Tarjetas</b> → <b>Resúmenes</b> y descargá el último en PDF.</li>
+            <li>También te suele llegar por mail cuando cierra la tarjeta.</li>
+            <li>Si tu banco te deja <b>exportar los movimientos en Excel</b>, también sirve.</li>
+            <li>Si el PDF pide contraseña, Rinde te la pide para abrirlo. No se guarda.</li>
+          </ul></div>
+        </details>
+        <p class="ip-lock"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>El archivo se lee acá, en tu celular. No se sube a ningún lado.</p>
+      </section>
+      <section data-ip="2" hidden>
+        <h2 id="ipT2" tabindex="-1">Revisá y anotá</h2>
+        <p class="ip-card" id="ipSum"></p>
+        <label for="ipWhen">¿En qué mes los anoto?
+          <select id="ipWhen"></select>
+        </label>
+        <div class="ip-box warn" id="ipUsd" hidden>
+          <p id="ipUsdTxt"></p>
+          <label for="ipRate">¿A cuánto está el dólar?
+            <div class="money"><span>$</span><input id="ipRate" inputmode="decimal" placeholder="Ej: 1.450" autocomplete="off"></div>
+          </label>
+          <small class="hint">Si el resumen trae los impuestos aparte, usá el dólar oficial.</small>
+        </div>
+        <div class="ip-box ip-bulk" id="ipBulk" hidden>
+          <p id="ipBulkTxt"></p>
+          <select id="ipBulkSel" aria-label="Sobre para los gastos que no tienen"></select>
+        </div>
+        <div class="ip-tools"><span id="ipCount"></span><span><button type="button" id="ipAll">Marcar todos</button> · <button type="button" id="ipNone">Ninguno</button></span></div>
+        <div class="ip-list" id="ipList"></div>
+        <p class="hint" id="ipSkip" style="margin:0"></p>
+      </section>
+      <section data-ip="3" hidden>
+        <div class="ip-done">
+          <span class="okc" aria-hidden="true">✓</span>
+          <h2 id="ipT3" tabindex="-1">¡Listo!</h2>
+          <p id="ipDoneTxt"></p>
+        </div>
+      </section>
+    </div>
+    <footer class="wiz-foot" id="ipFoot" hidden>
+      <button class="btn ghost" type="button" id="ipPrev">Atrás</button>
+      <button class="btn" type="button" id="ipNext">Anotar</button>
+    </footer>
+  </div>
+</div>
+<style>
 /* ---- encabezado con botón de ayuda ---- */
 .top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"brand month help";align-items:center;gap:10px}
 .top .brand{grid-area:brand;min-width:0}
@@ -663,7 +797,7 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
   <div class="cols">
     <div style="display:grid;gap:20px;min-width:0">
       <form class="panel" id="form" data-tab="anotar" autocomplete="off">
-        <h2>Anotar</h2>
+        <div class="row" style="flex-wrap:wrap"><h2>Anotar</h2><button class="btn ghost small ipmini" type="button" id="ipOpen2"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/></svg>Importar resumen</button></div>
         <div class="seg" role="group" aria-label="Tipo de movimiento">
           <button type="button" data-t="out" aria-pressed="true">Gasto</button>
           <button type="button" data-t="in" aria-pressed="false">Ingreso</button>
@@ -685,6 +819,13 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
         <button class="btn" type="submit" id="f-submit">Agregar gasto</button>
         <div id="f-msg" class="hint" aria-live="polite">Los ingresos se reparten solos entre tus sobres según los porcentajes.</div>
       </form>
+
+      <section class="panel ipcta" id="ipCta" data-tab="anotar" aria-labelledby="h-imp">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19"/><path d="M6.5 15h4"/></svg></span>
+        <h2 id="h-imp">¿Pagás con tarjeta?</h2>
+        <p>Importá el resumen y anotamos todos los gastos de una.</p>
+        <button class="btn ghost" type="button" id="ipOpen"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>Importar resumen de la tarjeta</button>
+      </section>
 
       <section class="panel" data-tab="sobres" aria-labelledby="h-edit">
         <div class="row"><h2 id="h-edit">Porcentajes</h2>
@@ -754,7 +895,7 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
 </nav>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.18</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.19</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
@@ -822,6 +963,8 @@ function localStore(){
     async saveCfg(c){ cfg=c; LS.set('sobres.cfg',c); },
     async add(m){ m.id = 'l'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); movs=[...movs,m]; LS.set('sobres.movs',movs); render.onMovs(movs); },
     async del(id){ movs=movs.filter(x=>x.id!==id); LS.set('sobres.movs',movs); render.onMovs(movs); },
+    async addMany(list){ list.forEach(m=>{ m.id='l'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }); const next=[...movs,...list]; if(!LS.set('sobres.movs',next)) throw new Error('storage'); movs=next; render.onMovs(movs); },
+    async delMany(ids){ const s=new Set(ids); movs=movs.filter(x=>!s.has(x.id)); LS.set('sobres.movs',movs); render.onMovs(movs); },
     snapshot(){ return {cfg, movs}; },
     async replaceAll(c,m){ cfg=c; movs=m; if(!LS.set('sobres.cfg',c)||!LS.set('sobres.movs',m)) throw new Error('storage'); render.onCfg(cfg); render.onMovs(movs); }
   };
@@ -1163,7 +1306,7 @@ $('bkFile').onchange = async () => {
     const okM = Array.isArray(d.movimientos) && d.movimientos.every(m=>m && (m.type==='in'||m.type==='out') && typeof m.amount==='number' && typeof m.date==='string');
     if(d.app!=='rinde' || !okB || !okM) throw new Error('formato');
     const clean = d.movimientos.map(m=>({id:String(m.id||('r'+Math.random().toString(36).slice(2,10))), type:m.type, amount:Math.abs(m.amount),
-      note:String(m.note||'').slice(0,80), date:m.date.slice(0,10), createdAt:Number(m.createdAt)||0, ...(m.type==='out'?{bucket:String(m.bucket||'')}:{})}));
+      note:String(m.note||'').slice(0,80), date:m.date.slice(0,10), createdAt:Number(m.createdAt)||0, ...(m.type==='out'?{bucket:String(m.bucket||'')}:{}), ...(typeof m.imp==='string'?{imp:m.imp.slice(0,120)}:{}), ...(typeof m.impB==='string'?{impB:m.impB.slice(0,24)}:{})}));
     const buckets = d.sobres.map(b=>({id:b.id.slice(0,40), name:b.name.slice(0,24), pct:b.pct, color:/^#[0-9a-f]{6}$/i.test(b.color||'')?b.color:'#5f8f3a'}));
     pending = {cfg:{buckets}, movs:clean};
     const now = store && store.snapshot ? store.snapshot().movs.length : 0;
@@ -1179,6 +1322,740 @@ $('bkYes').onclick = async () => {
   catch(e){ bkMsg('No se pudo restaurar. Probá de nuevo.'); }
   pending=null; $('bkConfirm').hidden=true;
 };
+
+// ---------- importar: lectura de resúmenes (todo pasa en el celular) ----------
+const IPX = (() => {
+  const nrm = s => String(s==null?'':s).normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const up = s => nrm(s).toUpperCase();
+  const p2 = n => String(n).padStart(2,'0');
+  const iso = (y,m,d) => y+'-'+p2(m)+'-'+p2(d);
+  const dim = (y,m) => new Date(y, m, 0).getDate();
+  const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const MES_EN = ['january','february','march','april','may','june','july','august','september','october','november','december'];
+  function monthOf(w){
+    const k = nrm(w).toLowerCase().replace(/\.$/,'');
+    if(k.length<3) return 0;
+    if('setiembre'.startsWith(k)) return 9;
+    for(let i=0;i<12;i++) if(MES[i].startsWith(k) || MES_EN[i].startsWith(k)) return i+1;
+    return 0;
+  }
+  const MW = '([A-Za-z\\u00C0-\\u017F]{3,10}\\.?)';
+  const RX = {
+    num3: /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4}|\d{2})(?![\d]|[.,]\d)/,
+    isoD: /^(\d{4})-(\d{2})-(\d{2})(?!\d)/,
+    nmn: new RegExp('^(\\d{1,4})[\\s\\-\\/.]+'+MW+'[\\s\\-\\/.]+(\\d{4}|\\d{1,2})(?![\\d]|[.,]\\d)'),
+    nm: new RegExp('^(\\d{1,2})(?:\\s+de)?[\\s\\-\\/.]+'+MW+'(?![A-Za-z\\u00C0-\\u017F])(?:\\s+(?:de\\s+)?(\\d{4})(?!\\d))?'),
+    mn: new RegExp('^'+MW+'\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?(?![\\d]|[.,]\\d)'),
+    num2: /^(\d{1,2})[\/\-](\d{1,2})(?![\/\-]?\d)/,
+  };
+  const fy = y => y<100 ? 2000+y : y;
+  const ok = (y,m,d) => m>=1 && m<=12 && d>=1 && d<=(y?dim(y,m):31);
+
+  // Fecha al principio del texto. order: 'dmy' o 'ymd' para el formato "25 Octubr 03" de Visa.
+  function dateAt(s, order){
+    let m;
+    if((m = RX.isoD.exec(s))){ const y=+m[1], mo=+m[2], d=+m[3]; if(ok(y,mo,d)) return {len:m[0].length, y, m:mo, d, f:'iso'}; }
+    if((m = RX.num3.exec(s))){ const d=+m[1], mo=+m[2], y=fy(+m[3]); if(ok(y,mo,d)) return {len:m[0].length, y, m:mo, d, f:'num'}; }
+    if((m = RX.nmn.exec(s))){
+      const a=m[1], mo=monthOf(m[2]), b=m[3];
+      if(mo){
+        let y, d;
+        if(a.length===4){ y=+a; d=+b; }
+        else if(b.length===4){ d=+a; y=+b; }
+        else if(order==='ymd'){ y=fy(+a); d=+b; }
+        else { d=+a; y=fy(+b); }
+        if(ok(y,mo,d)) return {len:m[0].length, y, m:mo, d, f:'nmn'};
+      }
+    }
+    if((m = RX.nm.exec(s))){ const d=+m[1], mo=monthOf(m[2]), y=m[3]?+m[3]:null; if(mo && ok(y,mo,d)) return {len:m[0].length, y, m:mo, d, f:'nm'}; }
+    if((m = RX.mn.exec(s))){ const mo=monthOf(m[1]), d=+m[2], y=m[3]?+m[3]:null; if(mo && ok(y,mo,d)) return {len:m[0].length, y, m:mo, d, f:'mn'}; }
+    if((m = RX.num2.exec(s))){ const d=+m[1], mo=+m[2]; if(ok(null,mo,d)) return {len:m[0].length, y:null, m:mo, d, f:'num2'}; }
+    return null;
+  }
+  function datesIn(s, order){
+    const out=[]; const re=/(^|[\s:(])(?=\d|[A-Za-z])/g; let m;
+    while((m=re.exec(s))){ const i=m.index+m[1].length; const r=dateAt(s.slice(i), order); if(r && r.y){ out.push(r); re.lastIndex=i+r.len; } else re.lastIndex=i+1; }
+    return out;
+  }
+
+  // Montos en formato argentino: 12.345,67 · -1.234,56 · 1.234,56- · $ 3.210 · U$S 9,99
+  const AMT = /(?<=^|[\s(\[:])(-\s?)?(U\$S|US\$|USD|u\$s|\$)?\s?(-\s?)?(\d{1,3}(?:\.\d{3})+|\d+)(,\d{2})?(-)?(?=$|[\s)\]])/g;
+  function amounts(s){
+    const out=[]; AMT.lastIndex=0; let m;
+    while((m=AMT.exec(s))){
+      if(m[0].length===0){ AMT.lastIndex++; continue; }
+      if(!(m[5] || m[2])) continue;
+      const v = Number(m[4].replace(/\./g,'') + (m[5] ? '.'+m[5].slice(1) : ''));
+      if(!isFinite(v)) continue;
+      out.push({i:m.index, j:m.index+m[0].length, v, neg:!!(m[1]||m[3]||m[6]), cur: m[2] ? (m[2]==='$' ? 'ARS' : 'USD') : null});
+    }
+    return out;
+  }
+  function tail(s){
+    const ms = amounts(s), t=[]; let end = s.replace(/\s+$/,'').length;
+    for(let k=ms.length-1;k>=0 && t.length<3;k--){ const a=ms[k]; if(/^\s*$/.test(s.slice(a.j,end))){ t.unshift(a); end=a.i; } else break; }
+    return t;
+  }
+
+  // Número en celdas de Excel/CSV: acepta 1.234,56 · 1,234.56 · -1234.5 · (1.234,56)
+  function cellNum(x){
+    if(typeof x==='number') return x;
+    let s = String(x==null?'':x).trim(); if(!s) return NaN;
+    let neg = /^\(.*\)$/.test(s) || /^-|-$/.test(s.replace(/\s/g,'')) ;
+    s = s.replace(/[()\s$]|U\$S|USD|US\$|ARS/gi,'').replace(/^-|-$/g,'');
+    if(!/^[\d.,]+$/.test(s)) return NaN;
+    const lc=s.lastIndexOf(','), ld=s.lastIndexOf('.');
+    if(lc>-1 && ld>-1){ s = lc>ld ? s.replace(/\./g,'').replace(',','.') : s.replace(/,/g,''); }
+    else if(lc>-1){ s = /,\d{1,2}$/.test(s) && (s.match(/,/g)||[]).length===1 ? s.replace(',','.') : s.replace(/,/g,''); }
+    else if(ld>-1){ s = /\.\d{1,2}$/.test(s) && (s.match(/\./g)||[]).length===1 ? s : s.replace(/\./g,''); }
+    const n=Number(s); return isFinite(n) ? (neg?-n:n) : NaN;
+  }
+
+  // ----- descripción, cuotas y tipo -----
+  function cleanDesc(raw){
+    let s = ' '+String(raw||'').replace(/\s+/g,' ')+' ';
+    let cuota = null;
+    const take = (re) => { const m = re.exec(s); if(m){ const n=+m[1], t=+m[2]; if(n>=1 && t>=n && t<=99){ cuota=[n,t]; s = s.slice(0,m.index)+' '+s.slice(m.index+m[0].length); return true; } } return false; };
+    s = s.replace(/^\s*\d{4,}\s*[*K]?\s+/,' ').replace(/^\s*\*\s*/,' ');
+    take(/\s(?:C(?:UOTA|TA)?\.?|CUOTAS?)\s?(\d{1,2})\s?\/\s?(\d{1,2})(?=\s)/i) ||
+    take(/\sCUOTAS?\s+(\d{1,2})\s+DE\s+(\d{1,2})(?=\s)/i) ||
+    take(/\s(\d{1,2})\s+DE\s+(\d{1,2})\s+CUOTAS?(?=\s)/i);
+    s = s.replace(/\s\d{5,}\s*$/,' ');
+    if(!cuota) take(/\s(\d{2})\/(\d{2})\s*$/);
+    s = s.replace(/\s\d{5,}\s*$/,' ').replace(/\s(USD|U\$S|US\$)\s*$/i,' ');
+    s = s.replace(/\s+/g,' ').replace(/^[\s\-*·|:]+|[\s\-*·|:]+$/g,'');
+    return {desc:s, cuota};
+  }
+  const RE_TOTAL = /^(SALDO|TOTAL|SUBTOTAL|PAGO MINIMO|LIMITE|CONSUMOS DEL PERIODO)\b/;
+  const RE_PAGO = /^(SU )?PAGO\b|\bSU PAGO\b|\bPAGO (EN|DE) (PESOS|DOLARES|U\$S|USD|ARS|TARJETA|RESUMEN|TC)\b|\bPAGO RECIBIDO\b|\bPAGO MINIMO\b|\bPAGO TOTAL\b/;
+  const RE_CRED = /\b(BONIF|BONIFICACION|DEVOLUCION|DEVOL|REINTEGRO|ANULACION|ANUL|CREDITO|DESCUENTO|CASHBACK|REEMBOLSO|AJUSTE A FAVOR|CONTRACARGO)\b/;
+  const RE_CARGO = /IMPUESTO|\bIMP\b|SELLOS|\bIVA\b|PERCEP|\bIIBB\b|INGRESOS BRUTOS|\bDB\.?\s?RG\b|\bRG\s?\d{3,4}\b|COMISION|\bCARGO|INTERES|SEGURO|MANTENIMIENTO|RENOVACION|ADMINISTRACION|FINANCIACION|PUNITORIO/;
+  function kindOf(desc, neg){
+    const u = up(desc);
+    if(RE_TOTAL.test(u)) return 'total';
+    if(RE_PAGO.test(u) && !/MERCADO ?PAGO\b/.test(u.replace(/^(SU )?PAGO\b/,''))) return 'pago';
+    if(neg || RE_CRED.test(u)) return 'credito';
+    if(RE_CARGO.test(u)) return 'cargo';
+    return 'gasto';
+  }
+  const PREFIX = /^(MERPAGO|MERCADOPAGO|MERCADO PAGO|MP|DLO|DLOCAL|PAYU|PYU|PAYPAL|SQ|EBANX|SP|TST|IZ|ITUNES\.COM|GOOGLE)\s?\*\s?/i;
+  const KEEP_UP = new Set('IVA YPF AFIP ARBA AGIP ABL SUBE HBO KFC DB RG IIBB MP USD AYSA ABSA EPEC OSDE BBVA ICBC HSBC DTV SA SRL TV YPF'.split(' '));
+  const LOW = new Set('de del la el los las y en con por para al'.split(' '));
+  function pretty(desc, kind){
+    let s = String(desc||'').replace(PREFIX,'').replace(/\*/g,' ').replace(/\(\s*[\d.,]+\s*\)/g,' ').replace(/\s{2,}/g,' ').trim();
+    if(kind!=='cargo'){ for(let k=0;k<3;k++) s = s.replace(/\s+(\d{1,6}|SUC|SUCURSAL|LOCAL|NRO|N°|(?=[A-Za-z]*\d)[A-Za-z0-9]{4,})\.?$/i,'').trim(); }
+    if(!s) s = String(desc||'').trim();
+    if(s === s.toUpperCase()){
+      s = s.toLowerCase().split(' ').map((w,i) => w.split(/([.\-\/&(])/).map((p,j,a) => {
+        if(!p || /^[.\-\/&(]$/.test(p)) return p;
+        if(KEEP_UP.has(p.toUpperCase())) return p.toUpperCase();
+        if(j>0 && a[j-1]==='.') return p;
+        if(i>0 && j===0 && LOW.has(p)) return p;
+        if(!/[aeiouáéíóú]/.test(p) && p.length<=4 && /^[a-z]+$/.test(p)) return p.toUpperCase();
+        return p.charAt(0).toUpperCase()+p.slice(1);
+      }).join('')).join(' ');
+    }
+    return s.slice(0,60) || 'Gasto con tarjeta';
+  }
+  const STOP = new Set('SA SRL SAS SUC DE LA EL LOS LAS Y DEL AL EN CUOTA COM WWW AR ARG BUENOS AIRES CABA CAP FED CIUDAD ONLINE INTERNET COMPRA DEBITO PAGO'.split(' '));
+  const GENERIC = new Set('SUPERMERCADO MERCADO FARMACIA ESTACION SERVICIO TIENDA KIOSCO ALMACEN RESTAURANT BAR CAFE SHOP STORE LIBRERIA'.split(' '));
+  function keys(desc){
+    const w = up(String(desc||'').replace(PREFIX,'')).replace(/[^A-Z ]+/g,' ').split(/\s+/).filter(x=>x.length>=2 && !STOP.has(x));
+    const k2 = w.slice(0,2).join(' ');
+    const k1 = w.find(x=>x.length>=3 && !GENERIC.has(x)) || '';
+    return {k2, k1};
+  }
+
+  // ----- sobre sugerido -----
+  const CATS = [
+    [/PEDIDOS ?YA|RAPPI|MC ?DONALD|BURGER|MOSTAZA|STARBUCKS|\bCAFE|RESTO|RESTAURANT|PARRILLA|PIZZ|HELAD|GRIDO|FREDDO|CERVEC|\bBAR\b|\bCINE|CINEMARK|HOYTS|SHOWCASE|TICKETEK|ALL ?ACCESS|ENTRADAS|TEATRO|DELIVERY|SUSHI|EMPANAD|LOMITER|HAVANNA|BONAFIDE|\bKFC\b|SUBWAY|WENDY|PANCHO/, /salid|disfrut|ocio|gusto|libre|diversi|delivery|resto|comer/],
+    [/SUPER|COTO|CARREFOUR|CARREF|\bDIA\b|JUMBO|DISCO|\bVEA\b|CHANGOMAS|ANONIMA|MAXICONSUMO|\bVITAL\b|DIARCO|YAGUAR|MAKRO|ALMACEN|AUTOSERVICIO|VERDULER|CARNICER|POLLERIA|PANADER|FIAMBRER|DIETETICA|MERCADITO|MAYORISTA|\bHIPER|COOPERATIVA OBRERA|LIBERTAD|DESPENSA|WALMART/, /comida|super|almacen|mercado|aliment|morfi|despensa|compras del mes/],
+    [/\bYPF\b|SHELL|AXION|PUMA|\bGULF\b|NAFTA|COMBUSTIBLE|ESTACION DE SERV|\bEESS\b|UBER|CABIFY|\bDIDI\b|\bSUBE\b|PEAJE|AUBASA|\bAUSA\b|AUTOPISTA|ESTACIONAM|PARKING|TAXI|REMIS|\bTREN|COLECTIVO|FLECHA BUS|PLUSMAR|ANDESMAR|CHEVALLIER|CRUCERO DEL NORTE/, /transp|nafta|auto|movil|colectivo|boleto|uber|combust|sube|viaje/],
+    [/NETFLIX|SPOTIFY|DISNEY|\bHBO\b|\bMAX\b|PRIME ?VIDEO|AMAZON PRIME|YOUTUBE|GOOGLE|APPLE|ICLOUD|ITUNES|PARAMOUNT|STAR ?\+|CRUNCHYROLL|CHATGPT|OPENAI|ANTHROPIC|CLAUDE|MICROSOFT|XBOX|PLAYSTATION|STEAM|NINTENDO|DEEZER|TIDAL|CANVA|ADOBE|DROPBOX|PATREON|TWITCH|MUBI/, /suscrip|stream|digital|servic|disfrut|ocio|gusto|libre/],
+    [/EDENOR|EDESUR|EDELAP|\bEPEC\b|\bEDET\b|EDESE|\bEDEN\b|\bEDEA\b|\bEMSA\b|METROGAS|NATURGY|CAMUZZI|ECOGAS|LITORAL GAS|GASNOR|GAS NEA|\bAYSA\b|\bABSA\b|AGUAS|TELECOM|\bPERSONAL\b|MOVISTAR|\bCLARO\b|TELECENTRO|FIBERTEL|\bFLOW\b|DIRECTV|\bDTV\b|ARNET|IPLAN|STARLINK|TELEFONICA|CABLEVISION|SUPERCANAL|TUENTI|\bABL\b|\bAGIP\b|\bARBA\b|MUNICIPALIDAD|RENTAS/, /servic|cuenta|luz|gas|internet|celu|telefono|fijo|boleta|factura|impuest/],
+    [/ALQUILER|EXPENSAS|INMOBILIARIA|CONSORCIO/, /alquiler|vivienda|casa|hogar|expensa/],
+    [/FARMACITY|FARMA|\bOSDE\b|SWISS MEDICAL|GALENO|MEDICUS|\bOMINT\b|MEDIFE|SANCOR SALUD|HOSPITAL|CLINICA|SANATORIO|ODONTO|DENTAL|OPTICA|LABORATORIO|KINESIO|PSICOLOG|PREPAGA|OBRA SOCIAL/, /salud|farmac|medic|prepaga|remedio/],
+    [/VETERINAR|PET ?SHOP|PUPPIS|MASCOT|BALANCEADO/, /mascot|perr|gat|pet/],
+    [/\bGYM\b|GIMNASIO|MEGATLON|SPORT ?CLUB|SMART ?FIT|CROSSFIT|PILATES|YOGA|NATACION/, /gym|gimnas|deport|entren|salud/],
+    [/UNIVERSIDAD|\bUNIV\b|FACULTAD|COLEGIO|ESCUELA|INSTITUTO|CURSO|UDEMY|COURSERA|PLATZI|DOMESTIKA|DUOLINGO/, /educ|estudi|curso|facu|colegio|escuela/],
+    [/AEROLINEAS|FLYBONDI|JET ?SMART|\bLATAM\b|DESPEGAR|BOOKING|AIRBNB|HOTEL|HOSTEL|ALMUNDO|AVANTRIP|TURISMO/, /viaj|vacacion|turismo|disfrut|ocio|libre/],
+    [/MERCADO ?LIBRE|\bMELI\b|ZARA|\bH ?& ?M\b|ADIDAS|NIKE|DEXTER|GRIMOLDI|FALABELLA|GARBARINO|FRAVEGA|MUSIMUNDO|ON CITY|SHEIN|TEMU|AMAZON|ALIEXPRESS|\bEASY\b|SODIMAC|BLAISTEN|INDUMENTARIA|\bROPA\b|CALZADO|ZAPATER|LIBRERIA|JUGUETER|BAZAR|FERRETER|PINTURER|ELECTRO|PERFUMER|COSMETIC|NATURA\b|\bAVON\b|TIENDA|\bSHOP\b|\bSTORE\b/, /compra|ropa|varios|otros/],
+  ];
+  const RE_CARGO_B = /impuest|tarjeta|cargo|banco|comision|servic|fijo|varios|otros/;
+  function suggest(desc, kind, buckets, rules){
+    const usable = buckets.filter(b => !/ahorr/.test(nrm(b.name).toLowerCase()));
+    const has = id => buckets.some(b=>b.id===id);
+    const {k2,k1} = keys(desc);
+    if(rules){ if(k2 && rules[k2] && has(rules[k2])) return rules[k2]; if(k1 && rules['1:'+k1] && has(rules['1:'+k1])) return rules['1:'+k1]; }
+    const u = up(desc);
+    const byName = re => { const b = usable.find(b => re.test(nrm(b.name).toLowerCase())); return b ? b.id : ''; };
+    if(kind==='cargo') return byName(RE_CARGO_B);
+    for(const [dre, bre] of CATS) if(dre.test(u)){ const id = byName(bre); if(id) return id; }
+    return '';
+  }
+
+  // ----- líneas de un PDF o texto pegado -----
+  // lines: [{text, xs?}] donde xs[i] es la x del borde derecho de cada letra (solo PDF).
+  function parseLines(lines, opt={}){
+    const todayS = opt.today || new Date().toISOString().slice(0,10);
+    const T = lines.map(l => ({text: String(l.text||'').replace(/ /g,' ').replace(/\t/g,'  '), xs:l.xs||null}));
+    const all = T.map(l=>l.text).join('\n'), U = up(all);
+    // orden de "25 Octubr 03" (Visa: año, mes, día) o "03 Oct 25"
+    const firsts=new Set(), lasts=new Set(); let dayOnly=0;
+    T.forEach(l => { const s=l.text.trim(); const m=RX.nmn.exec(s); if(m && monthOf(m[2]) && m[1].length<=2 && m[3].length<=2 && tail(s).length){ firsts.add(m[1]); lasts.add(m[3]); } if(/^\d{1,2}\s+\d{5,6}\s/.test(s)) dayOnly++; });
+    let order = 'dmy';
+    if(firsts.size && firsts.size < lasts.size) order='ymd';
+    else if(firsts.size && firsts.size===lasts.size && (/\bVISA\b/.test(U) || dayOnly)) order='ymd';
+    const meta = {order};
+    const B = [['VISA','Visa'],['MASTER ?CARD','Mastercard'],['AMERICAN EXPRESS|\\bAMEX\\b','American Express'],['NARANJA','Naranja X'],['\\bCABAL\\b','Cabal'],['MERCADO ?PAGO','Mercado Pago']];
+    const BK = [['GALICIA','Galicia'],['SANTANDER','Santander'],['BBVA|FRANCES','BBVA'],['MACRO','Macro'],['BANCO DE LA NACION|BANCO NACION|BNA\\b','Banco Nación'],['PROVINCIA','Banco Provincia'],['CIUDAD','Banco Ciudad'],['ICBC','ICBC'],['HSBC','HSBC'],['SUPERVIELLE','Supervielle'],['PATAGONIA','Banco Patagonia'],['CREDICOOP','Credicoop'],['COMAFI','Comafi'],['HIPOTECARIO','Hipotecario'],['BRUBANK','Brubank'],['UALA','Ualá'],['SANTIAGO DEL ESTERO','Banco Santiago del Estero']];
+    const headTxt = up(T.filter(l=>!tail(l.text).length).slice(0,60).map(l=>l.text).join(' '));
+    for(const [re,n] of B) if(new RegExp(re).test(headTxt)){ meta.brand=n; break; }
+    for(const [re,n] of BK) if(new RegExp(re).test(headTxt)){ meta.bank=n; break; }
+    // columnas de pesos y dólares, y si hay columna de saldo (extractos de cuenta)
+    let cols = null, saldoCol = false;
+    const colOf = (l, re) => { const u=up(l.text); const m=re.exec(u); if(!m || !l.xs) return null; const a=m.index, b=a+m[0].length-1; return ((l.xs[a-1]||l.xs[a]-8)+l.xs[b])/2; };
+    // fechas de cierre y vencimiento (candidatas)
+    const cand = {cierre:[], venc:[]};
+    T.forEach((l,i) => {
+      const u = up(l.text);
+      if(/CIERRE|VENC/.test(u)){
+        const both = /CIERRE/.test(u) && /VENC/.test(u) && u.indexOf('CIERRE') < u.indexOf('VENC');
+        let ds = [...datesIn(l.text,'dmy').map(d=>({d, o:'dmy'})), ...datesIn(l.text,'ymd').map(d=>({d,o:'ymd'}))];
+        let src = l.text;
+        if(!ds.length && T[i+1]){ src=T[i+1].text; ds = [...datesIn(src,'dmy').map(d=>({d,o:'dmy'})), ...datesIn(src,'ymd').map(d=>({d,o:'ymd'}))]; }
+        const pick = (o, k) => ds.filter(x=>x.o===o).map(x=>x.d)[k];
+        ['dmy','ymd'].forEach(o => {
+          const list = ds.filter(x=>x.o===o).map(x=>x.d);
+          if(!list.length) return;
+          if(both){ if(list[0]) cand.cierre.push(list[0]); if(list[1]) cand.venc.push(list[1]); }
+          else if(/CIERRE/.test(u) && !/ANTERIOR|PROXIMO/.test(u)) cand.cierre.push(list[0]);
+          else if(/VENC/.test(u) && !/ANTERIOR|PROXIMO/.test(u)) cand.venc.push(list[0]);
+        });
+      }
+    });
+    // transacciones
+    const raw = []; let lastYM = null;
+    T.forEach(l => {
+      let s = l.text; const lead = s.match(/^[\s*\-•·|]*/)[0].length; s = s.slice(lead);
+      const tl = tail(s);
+      if(!tl.length){
+        const u = up(s);
+        if(l.xs && /\bPESOS\b|(^|\s)\$(\s|$)|IMPORTE EN PESOS/.test(u) && /DOLARES|U\$S|\bUSD\b|US\$/.test(u)){
+          const a = colOf(l, /\bPESOS\b|(?<=^|\s)\$(?=\s|$)/), b = colOf(l, /DOLARES|U\$S|\bUSD\b|US\$/);
+          if(a!=null && b!=null) cols = {ars:a, usd:b};
+        }
+        if(/\bSALDO\b/.test(u) && /\bFECHA\b/.test(u)) saldoCol = true;
+        return;
+      }
+      let d = dateAt(s, order), dlen = d ? d.len : 0;
+      if(!d && lastYM){ const m = /^(\d{1,2})\s+(?=\d{4,}|\S)/.exec(s); if(m && (order==='ymd' || /^\d{1,2}\s+\d{4,}/.test(s))){ const dd=+m[1]; if(ok(lastYM[0],lastYM[1],dd)){ d={y:lastYM[0], m:lastYM[1], d:dd, f:'day'}; dlen=m[1].length; } } }
+      if(!d) return;
+      if(d.y) lastYM = [d.y, d.m];
+      let amts = tl.slice();
+      if(saldoCol && amts.length>=2) amts = amts.slice(0,-1);
+      const descRaw = s.slice(dlen, amts[0].i - 0).replace(/\s+$/,'');
+      let cur = 'ARS', a = amts[amts.length-1], orig = null;
+      const usdA = amts.find(x=>x.cur==='USD');
+      if(usdA){ cur='USD'; orig=usdA.v; if(a.cur===null || a.cur==='USD') {} }
+      else if(cols && l.xs){
+        const x = l.xs[lead + a.j - 1]; if(x!=null) cur = Math.abs(x-cols.usd) < Math.abs(x-cols.ars) ? 'USD' : 'ARS';
+        if(amts.length>=2 && cur==='USD'){ const p = amts[amts.length-2]; const px=l.xs[lead+p.j-1]; if(px!=null && Math.abs(px-cols.ars) < Math.abs(px-cols.usd) && p.v>0){ cur='ARS'; a=p; } }
+      } else if(/\b(USD|U\$S|US\$|DOLARES)\b/.test(up(descRaw))) cur='USD';
+      const {desc, cuota} = cleanDesc(descRaw.replace(/\s(USD|U\$S|US\$)\s*$/i,''));
+      raw.push({y:d.y, m:d.m, d:d.d, desc, cuota, cur, amount:Math.abs(a.v), neg:a.neg, orig});
+    });
+    return finish(raw, cand, meta, todayS);
+  }
+
+  function finish(raw, cand, meta, todayS){
+    // fechas: año que falta, cierre y vencimiento
+    const withY = raw.filter(r=>r.y).map(r=>iso(r.y,r.m,r.d)).sort();
+    const maxD = withY[withY.length-1] || todayS;
+    const near = (list, target, lo, hi) => { let best=null, bd=1e9; list.forEach(c=>{ const s=iso(c.y,c.m,c.d); const diff=(Date.parse(s)-Date.parse(target))/864e5; if(diff>=lo && diff<=hi && Math.abs(diff)<bd){ bd=Math.abs(diff); best=s; } }); return best; };
+    meta.cierre = near(cand.cierre, maxD, -5, 60);
+    meta.venc = near(cand.venc, meta.cierre || maxD, 0, 40);
+    const ref = meta.cierre || (withY.length ? maxD : todayS);
+    const ry=+ref.slice(0,4), rm=+ref.slice(5,7);
+    raw.forEach(r => { if(!r.y){ r.y = r.m > rm+1 ? ry-1 : ry; if(r.d>dim(r.y,r.m)) r.d=dim(r.y,r.m); } r.date = iso(r.y,r.m,r.d); });
+    // si casi todo viene en negativo (billeteras, cuentas), los negativos son gastos
+    const negs = raw.filter(r=>r.neg).length, poss = raw.length-negs;
+    const flip = negs > poss && negs >= 2;
+    const txs = [], skipped = {pago:0, credito:0};
+    raw.forEach(r => {
+      const neg = flip ? !r.neg : r.neg;
+      let k = kindOf(r.desc, neg);
+      if(k==='total') return;
+      if(k==='pago' || k==='credito'){ skipped[k]++; return; }
+      if(!(r.amount>0)) return;
+      txs.push({date:r.date, desc:r.desc, name:pretty(r.desc,k), cuota:r.cuota, cur:r.cur, amount:Math.round(r.amount*100)/100, orig:r.orig, kind:k});
+    });
+    meta.skipped = skipped;
+    return {txs, meta};
+  }
+
+  // ----- tablas (Excel, CSV, HTML) -----
+  function parseTable(rows, opt={}){
+    const todayS = opt.today || new Date().toISOString().slice(0,10);
+    const H = c => up(c).replace(/\s+/g,' ').trim();
+    let hi=-1, col={};
+    for(let i=0;i<Math.min(rows.length,40);i++){
+      const r = rows[i].map(H);
+      const f = r.findIndex(c=>/^FECHA|^FECHA DE (OPERACION|COMPRA|CONSUMO|MOVIMIENTO)|^DATE$|^DIA$/.test(c));
+      const a = r.findIndex(c=>/IMPORTE|MONTO|PESOS|^\$$|VALOR|^TOTAL$|AMOUNT|DEBITO|^DEBE$|CREDITO|^HABER$/.test(c));
+      if(f>-1 && a>-1){
+        hi=i;
+        const find = re => r.findIndex(c=>re.test(c));
+        const fOp = find(/FECHA (DE )?(OPERACION|COMPRA|CONSUMO|ORIGEN|TRANSACCION)/);
+        col.date = fOp>-1 ? fOp : f;
+        col.desc = find(/DESCRIP|DETALLE|CONCEPTO|COMERCIO|ESTABLECIMIENTO|REFERENCIA|^MOVIMIENTO|DESCRIPTION|NOMBRE/);
+        col.usd = find(/DOLAR|U\$S|USD|US\$/);
+        col.amt = r.findIndex((c,j)=>j!==col.usd && /IMPORTE|MONTO|PESOS|^\$$|VALOR|^TOTAL$|AMOUNT/.test(c) && !/SALDO/.test(c));
+        col.deb = find(/DEBITO|^DEBE$|EGRESO|SALIDA/);
+        col.cre = find(/CREDITO|^HABER$|INGRESO|ENTRADA/);
+        col.cuota = find(/CUOTA/);
+        col.cur = find(/^MONEDA|CURRENCY/);
+        break;
+      }
+    }
+    if(hi<0) return null;
+    const raw=[];
+    for(let i=hi+1;i<rows.length;i++){
+      const r = rows[i]; const g = k => col[k]>-1 && col[k]!==undefined ? r[col[k]] : undefined;
+      let dv = g('date'), d=null;
+      if(typeof dv==='number' && dv>20000 && dv<90000){ const t=new Date(Date.UTC(1899,11,30)+Math.round(dv)*864e5); d={y:t.getUTCFullYear(), m:t.getUTCMonth()+1, d:t.getUTCDate()}; }
+      else if(dv instanceof Date){ d={y:dv.getFullYear(), m:dv.getMonth()+1, d:dv.getDate()}; }
+      else if(dv!=null){ const s=String(dv).trim(); d = dateAt(s,'dmy'); if(!d){ const m=/^(\d{4})[\/.](\d{1,2})[\/.](\d{1,2})/.exec(s); if(m) d={y:+m[1],m:+m[2],d:+m[3]}; } }
+      if(!d) continue;
+      let v = NaN, cur='ARS', neg=false, usdOrig=null;
+      const curTxt = up(g('cur')||'');
+      if(col.deb>-1 || col.cre>-1){
+        const db = cellNum(g('deb')), cr = cellNum(g('cre'));
+        if(isFinite(db) && db!==0){ v=Math.abs(db); neg=false; }
+        else if(isFinite(cr) && cr!==0){ v=Math.abs(cr); neg=true; }
+        if(!isFinite(v) && col.amt>-1){ const n=cellNum(g('amt')); if(isFinite(n)){ v=Math.abs(n); neg=n<0; } }
+      } else {
+        const a = col.amt>-1 ? cellNum(g('amt')) : NaN, u = col.usd>-1 ? cellNum(g('usd')) : NaN;
+        if(isFinite(a) && a!==0){ v=Math.abs(a); neg=a<0; }
+        else if(isFinite(u) && u!==0){ v=Math.abs(u); neg=u<0; cur='USD'; usdOrig=v; }
+      }
+      if(/USD|U\$S|DOLAR|US\$/.test(curTxt)){ cur='USD'; usdOrig=v; }
+      if(!isFinite(v) || !v) continue;
+      let descRaw = String(g('desc')==null ? r.filter((c,j)=>j!==col.date && typeof c==='string' && !isFinite(cellNum(c))).join(' ') : g('desc'));
+      const cq = g('cuota'); if(cq!=null && String(cq).trim()) descRaw += ' CUOTA '+String(cq).trim().replace(/\s*de\s*/i,'/');
+      const {desc, cuota} = cleanDesc(descRaw);
+      raw.push({y:d.y, m:d.m, d:d.d, desc, cuota, cur, amount:v, neg, orig:usdOrig});
+    }
+    return finish(raw, {cierre:[], venc:[]}, {order:'dmy', table:true}, todayS);
+  }
+
+  function parseCSV(text){
+    const first = text.split(/\r?\n/).slice(0,8).join('\n');
+    const cnt = ch => (first.match(new RegExp(ch==='\t'?'\\t':'\\'+ch,'g'))||[]).length;
+    const del = [';',',','\t','|'].sort((a,b)=>cnt(b)-cnt(a))[0];
+    const rows=[]; let row=[], cell='', q=false;
+    for(let i=0;i<text.length;i++){
+      const c=text[i];
+      if(q){ if(c==='"'){ if(text[i+1]==='"'){ cell+='"'; i++; } else q=false; } else cell+=c; continue; }
+      if(c==='"' && cell==='') { q=true; continue; }
+      if(c===del){ row.push(cell); cell=''; continue; }
+      if(c==='\n' || c==='\r'){ if(c==='\r' && text[i+1]==='\n') i++; row.push(cell); rows.push(row); row=[]; cell=''; continue; }
+      cell+=c;
+    }
+    if(cell!=='' || row.length){ row.push(cell); rows.push(row); }
+    return rows.filter(r=>r.some(c=>String(c).trim()));
+  }
+
+  // Texto pegado: junta en un solo renglón lo que la app del banco separa en varias líneas.
+  function parsePasted(text, opt={}){
+    const ls = String(text||'').replace(/\r/g,'').split('\n').map(s=>s.replace(/ /g,' ').trim()).filter(Boolean);
+    if(ls.length>=2 && ls.filter(s=>s.includes('\t')).length >= ls.length*0.6){
+      const t = parseTable(ls.map(s=>s.split('\t')), opt); if(t && t.txs.length) return t;
+    }
+    const recs=[]; let cur=null;
+    ls.forEach(s => {
+      const d = dateAt(s.replace(/^[\s*\-•·|]*/,''), 'dmy');
+      if(d){ if(cur) recs.push(cur); cur = s; if(tail(s).length){ recs.push(cur); cur=null; } }
+      else if(cur){ cur += '  '+s; if(tail(cur).length){ recs.push(cur); cur=null; } }
+      else recs.push(s);
+    });
+    if(cur) recs.push(cur);
+    const merged = recs.map(s => {
+      // "12 nov  Supermercado  -$ 23.456,78" ya queda bien; si el monto quedó en el medio, lo pasamos al final
+      return {text:s};
+    });
+    return parseLines(merged, opt);
+  }
+
+  return {parseLines, parseTable, parseCSV, parsePasted, suggest, keys, pretty, dateAt, tail, cellNum, cleanDesc, kindOf, nrm, up};
+})();
+
+// ---------- importar gastos de la tarjeta (pantalla) ----------
+const IP = {step:1, rows:[], meta:{}, file:null, batch:null, done:null};
+const IP_PDF = (() => { try{ return new URL('vendor/pdfjs/', document.baseURI).href; }catch(e){ return 'vendor/pdfjs/'; } })();
+const ipRules = () => { const r = LS.get('rinde.imp.reglas'); return r && typeof r==='object' ? r : {}; };
+const ipUsd = n => n.toLocaleString('es-AR',{minimumFractionDigits:2, maximumFractionDigits:2});
+const ipFmtD = s => new Date(s+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'}).replace('.','');
+const ipDim = (y,m) => new Date(y, m, 0).getDate();
+let ipReturn = null;
+
+function ipOpen(){
+  if(tourSB || T.on) return;
+  if(!store){ showStatus('Esperá un segundo a que carguen tus datos.','err'); return; }
+  ipReturn = document.activeElement;
+  IP.rows=[]; IP.meta={}; IP.file=null; IP.batch=null; IP.done=null;
+  $('ipPw').hidden=true; $('ipPwIn').value=''; $('ipText').value=''; $('ipPasteBox').open=false; ipStatus('');
+  $('imp').hidden=false; document.body.style.overflow='hidden';
+  ipStep(1);
+}
+function ipClose(){
+  $('imp').hidden=true; document.body.style.overflow='';
+  if(ipReturn && ipReturn.focus && document.contains(ipReturn)) ipReturn.focus({preventScroll:true});
+}
+function ipStatus(t, kind){
+  const s=$('ipStatus'); s.hidden=!t; s.className='ip-status'+(kind?' '+kind:''); s.replaceChildren();
+  if(!t) return;
+  if(kind==='busy') s.append(el('span',{class:'spin','aria-hidden':'true'}));
+  s.append(el('span',{text:t}));
+}
+function ipStep(n){
+  IP.step=n;
+  document.querySelectorAll('#imp [data-ip]').forEach(s => { s.hidden = +s.dataset.ip!==n; });
+  document.querySelectorAll('#imp .wiz-steps i').forEach((i,k) => i.classList.toggle('on', k<n));
+  $('ipStepLbl').textContent = 'Paso '+n+' de 3';
+  $('ipFoot').hidden = n===1;
+  $('ipPrev').hidden = false;
+  $('ipBody').scrollTop = 0;
+  if(n===2){ $('ipPrev').textContent='Atrás'; ipRender(); }
+  if(n===3){ $('ipPrev').textContent='Deshacer'; $('ipNext').textContent='Ver movimientos'; $('ipNext').disabled=false; }
+  const h = $('ipT'+n); if(h) setTimeout(()=>h.focus({preventScroll:true}), 40);
+}
+
+// ----- leer el archivo -----
+async function ipText(file){
+  const buf = await file.arrayBuffer();
+  try{ return new TextDecoder('utf-8',{fatal:true}).decode(buf); }catch(e){ return new TextDecoder('windows-1252').decode(buf); }
+}
+let ipLib = null;
+async function ipPdfLib(){
+  if(ipLib) return ipLib;
+  try{ ipLib = await import(IP_PDF+'pdf.min.js'); }
+  catch(e){ const er = new Error('nolib'); er.code='nolib'; throw er; }
+  ipLib.GlobalWorkerOptions.workerSrc = IP_PDF+'pdf.worker.min.js';
+  return ipLib;
+}
+async function ipPdfLines(file, password){
+  const lib = await ipPdfLib();
+  const data = new Uint8Array(await file.arrayBuffer());
+  const doc = await lib.getDocument({data, password: password || undefined, cMapUrl: IP_PDF+'cmaps/', cMapPacked:true, standardFontDataUrl: IP_PDF+'standard_fonts/', isEvalSupported:false, disableFontFace:true, useSystemFonts:false}).promise;
+  const out = [];
+  try{
+    for(let p=1; p<=Math.min(doc.numPages, 40); p++){
+      const page = await doc.getPage(p);
+      const tc = await page.getTextContent();
+      const items = tc.items.filter(it => it.str && it.str.trim()).map(it => ({s:it.str, x:it.transform[4], y:it.transform[5], w:it.width||0, h:Math.abs(it.transform[3])||it.height||8}));
+      items.sort((a,b) => b.y-a.y || a.x-b.x);
+      const lines = [];
+      items.forEach(it => { const L = lines[lines.length-1]; if(L && Math.abs(L.y-it.y) <= Math.max(1.5, Math.min(L.h,it.h)*0.45)) L.items.push(it); else lines.push({y:it.y, h:it.h, items:[it]}); });
+      lines.forEach(L => {
+        L.items.sort((a,b) => a.x-b.x);
+        let text='', xs=[], end=null;
+        L.items.forEach(it => {
+          if(end!=null){ const gap = it.x-end; if(gap > it.h*0.15 && !/\s$/.test(text) && !/^\s/.test(it.s)){ const n = gap > it.h*2.2 ? 2 : 1; for(let k=0;k<n;k++){ text+=' '; xs.push(it.x); } } }
+          const n = it.s.length;
+          for(let k=0;k<n;k++){ text += it.s[k]; xs.push(it.x + it.w*(k+1)/n); }
+          end = it.x+it.w;
+        });
+        out.push({text, xs});
+      });
+      if(page.cleanup) page.cleanup();
+    }
+  } finally { try{ doc.destroy(); }catch(e){} }
+  return out;
+}
+async function ipUnzip(buf){
+  const dv = new DataView(buf), u8 = new Uint8Array(buf), files = {};
+  let eo = -1;
+  for(let i=buf.byteLength-22; i>=Math.max(0, buf.byteLength-66000); i--) if(dv.getUint32(i,true)===0x06054b50){ eo=i; break; }
+  if(eo<0) throw new Error('zip');
+  let off = dv.getUint32(eo+16,true);
+  const n = dv.getUint16(eo+10,true);
+  for(let k=0;k<n;k++){
+    if(dv.getUint32(off,true)!==0x02014b50) break;
+    const nl=dv.getUint16(off+28,true), xl=dv.getUint16(off+30,true), cl=dv.getUint16(off+32,true);
+    files[new TextDecoder().decode(u8.subarray(off+46, off+46+nl))] = {m:dv.getUint16(off+10,true), cs:dv.getUint32(off+20,true), lo:dv.getUint32(off+42,true)};
+    off += 46+nl+xl+cl;
+  }
+  return {
+    names: Object.keys(files),
+    async get(name){
+      const f = files[name]; if(!f) return null;
+      const st = f.lo+30+dv.getUint16(f.lo+26,true)+dv.getUint16(f.lo+28,true);
+      const data = u8.subarray(st, st+f.cs);
+      if(f.m===0) return new TextDecoder().decode(data);
+      if(f.m!==8 || typeof DecompressionStream==='undefined') throw new Error('zip');
+      return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+    }
+  };
+}
+async function ipXlsxRows(file){
+  const z = await ipUnzip(await file.arrayBuffer());
+  const P = s => new DOMParser().parseFromString(s, 'application/xml');
+  const ss = [], sst = await z.get('xl/sharedStrings.xml');
+  if(sst) P(sst).querySelectorAll('si').forEach(si => ss.push([...si.querySelectorAll('t')].map(t=>t.textContent).join('')));
+  const sheets = z.names.filter(n => /^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort((a,b) => parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));
+  if(!sheets.length) throw new Error('xlsx');
+  const doc = P(await z.get(sheets[0]));
+  const rows = [];
+  doc.querySelectorAll('sheetData > row').forEach(r => {
+    const row = [];
+    r.querySelectorAll('c').forEach(c => {
+      const ref = (c.getAttribute('r')||'').replace(/\d+/g,'');
+      let ci = 0; for(const ch of ref) ci = ci*26 + (ch.charCodeAt(0)-64); ci = ref ? ci-1 : row.length;
+      const t = c.getAttribute('t'), v = c.querySelector('v');
+      let val;
+      if(t==='s') val = ss[+(v ? v.textContent : -1)] || '';
+      else if(t==='inlineStr') val = [...c.querySelectorAll('t')].map(x=>x.textContent).join('');
+      else if(t==='str' || t==='e' || t==='b') val = v ? v.textContent : '';
+      else val = v && v.textContent!=='' ? Number(v.textContent) : '';
+      row[ci] = val;
+    });
+    for(let i=0;i<row.length;i++) if(row[i]===undefined) row[i]='';
+    rows.push(row);
+  });
+  return rows;
+}
+function ipHtmlRows(text){
+  const d = new DOMParser().parseFromString(text, 'text/html'), rows = [];
+  d.querySelectorAll('tr').forEach(tr => rows.push([...tr.querySelectorAll('th,td')].map(td => td.textContent.replace(/\s+/g,' ').trim())));
+  return rows;
+}
+async function ipRead(file, password){
+  if(!file) return;
+  IP.file = file;
+  if(file.size > 25*1024*1024){ ipStatus('Ese archivo es muy grande. Elegí el resumen en PDF o el Excel de movimientos.','err'); return; }
+  ipStatus('Leyendo '+(file.name || 'el archivo')+'…', 'busy');
+  $('ipPick').disabled = true; $('ipPw').hidden = true;
+  try{
+    const h = new Uint8Array(await file.slice(0,8).arrayBuffer());
+    const isPdf = h[0]===0x25 && h[1]===0x50 && h[2]===0x44 && h[3]===0x46;
+    const isZip = h[0]===0x50 && h[1]===0x4b;
+    const isOle = h[0]===0xd0 && h[1]===0xcf && h[2]===0x11 && h[3]===0xe0;
+    let res = null;
+    if(isPdf) res = IPX.parseLines(await ipPdfLines(file, password), {today:today()});
+    else if(isZip) res = IPX.parseTable(await ipXlsxRows(file), {today:today()});
+    else if(isOle){ ipStatus('Ese Excel tiene un formato viejo (.xls) que no podemos leer. Abrilo y guardalo como .xlsx o CSV, o copiá los movimientos y pegalos abajo.','err'); return; }
+    else {
+      const text = await ipText(file);
+      if(/<table[\s>]/i.test(text)) res = IPX.parseTable(ipHtmlRows(text), {today:today()});
+      else { res = IPX.parseTable(IPX.parseCSV(text), {today:today()}); if(!res || !res.txs.length) res = IPX.parsePasted(text, {today:today()}); }
+    }
+    ipLoaded(res, 'file');
+  }catch(e){
+    if(e && e.name==='PasswordException'){
+      $('ipPw').hidden = false; ipStatus(e.code===2 ? 'Esa contraseña no es. Probá de nuevo.' : '', e.code===2 ? 'err' : '');
+      setTimeout(()=>{ $('ipPwIn').focus(); $('ipPwIn').select(); }, 50); return;
+    }
+    if(e && e.code==='nolib'){ ipStatus('Para leer un PDF por primera vez necesitás internet. Conectate y probá de nuevo.','err'); return; }
+    ipStatus('No pudimos leer ese archivo. Probá con el PDF que bajás de la app del banco, o copiá los movimientos y pegalos abajo.','err');
+  }finally{ $('ipPick').disabled = false; $('ipFile').value = ''; }
+}
+
+// ----- revisar -----
+function ipLoaded(res, src){
+  if(!res || !res.txs.length){
+    const sk = res && res.meta && res.meta.skipped;
+    ipStatus(sk && (sk.pago || sk.credito) ? 'Solo encontramos pagos o devoluciones: ningún gasto para anotar.'
+      : src==='paste' ? 'No encontramos gastos en lo que pegaste. Fijate que cada gasto tenga la fecha y el monto (por ejemplo: 12/11/25  SUPERMERCADO  8.456,00).'
+      : 'No encontramos gastos en este archivo. Si el resumen es una foto o un escaneo, no se puede leer: probá con el PDF que bajás de la app del banco, o copiá los movimientos y pegalos abajo.', 'err');
+    return;
+  }
+  ipStatus('');
+  IP.meta = res.meta;
+  const rules = ipRules(), fps = new Set(realMovs.map(m=>m.imp).filter(Boolean));
+  const manual = realMovs.filter(m => m.type==='out' && !m.imp);
+  IP.rows = res.txs.map(t => {
+    const fp = [t.date, t.cur, Math.round(t.amount*100), IPX.keys(t.desc).k2, t.cuota ? t.cuota.join('/') : ''].join('|');
+    const r = {t, fp, bucket: IPX.suggest(t.desc, t.kind, state.buckets, rules), on:true, note:''};
+    if(fps.has(fp)){ r.on=false; r.note='Ya lo importaste antes'; }
+    else if(t.cur==='ARS'){
+      const tt = Date.parse(t.date);
+      const hit = manual.find(m => Math.abs(m.amount - t.amount) < 1 && Math.abs(Date.parse(m.date)-tt) <= 3*864e5);
+      if(hit){ r.on=false; r.note='Parece que ya lo anotaste el '+ipFmtD(hit.date); }
+    }
+    return r;
+  });
+  // fecha de referencia para las cuotas: el cierre o el último gasto
+  const plain = res.txs.filter(t=>!t.cuota || t.cuota[0]===1).map(t=>t.date).sort();
+  IP.ref = res.meta.cierre || plain[plain.length-1] || today();
+  // ¿en qué mes?
+  const yms = new Set(), cur = today().slice(0,7);
+  [res.meta.venc, res.meta.cierre].forEach(d => d && yms.add(d.slice(0,7)));
+  yms.add(cur); yms.add(ymAdd(cur,-1));
+  const sel = $('ipWhen'); sel.replaceChildren(el('option',{value:'compra',text:'En la fecha de cada compra'}));
+  [...yms].sort().reverse().forEach(ym => sel.append(el('option',{value:'m:'+ym, text:'Todo en '+mName(ym)+' '+ym.slice(0,4)+(res.meta.venc && res.meta.venc.startsWith(ym) ? ' (vence ese mes)' : '')})));
+  const pref = LS.get('rinde.imp.modo');
+  sel.value = pref==='pago' && res.meta.venc ? 'm:'+res.meta.venc.slice(0,7) : 'compra';
+  // dólar
+  const usd = IP.rows.filter(r=>r.t.cur==='USD');
+  $('ipUsd').hidden = !usd.length;
+  if(usd.length){
+    const tot = usd.reduce((s,r)=>s+r.t.amount,0);
+    $('ipUsdTxt').textContent = (usd.length===1 ? 'Hay 1 gasto en dólares' : 'Hay '+usd.length+' gastos en dólares')+' (US$ '+ipUsd(tot)+'). Para anotarlos en pesos, decinos la cotización.';
+    const last = LS.get('rinde.imp.dolar'); $('ipRate').value = last ? String(last) : '';
+  }
+  // resumen de arriba
+  const sum = $('ipSum'); sum.replaceChildren();
+  const who = [res.meta.brand, res.meta.bank].filter(Boolean).join(' · ');
+  const bits = [];
+  if(res.meta.cierre) bits.push('cierre '+ipFmtD(res.meta.cierre));
+  if(res.meta.venc) bits.push('vence '+ipFmtD(res.meta.venc));
+  bits.push(res.txs.length===1 ? '1 gasto encontrado' : res.txs.length+' gastos encontrados');
+  if(who) sum.append(el('b',{text:who}), document.createTextNode(' · '));
+  sum.append(document.createTextNode(cap1(bits.join(' · '))));
+  const sk = res.meta.skipped || {}, parts = [];
+  if(sk.pago) parts.push(sk.pago===1 ? '1 pago de la tarjeta' : sk.pago+' pagos de la tarjeta');
+  if(sk.credito) parts.push(sk.credito===1 ? '1 devolución o ingreso' : sk.credito+' devoluciones o ingresos');
+  $('ipSkip').textContent = parts.length ? 'No se anotan '+parts.join(' ni ')+': no son gastos.' : '';
+  ipStep(2);
+}
+function ipDate(r){
+  const w = $('ipWhen').value, t = r.t;
+  if(w==='compra'){
+    if(!(t.cuota && t.cuota[0]>1)) return t.date;
+    // la cuota cae en este resumen: mismo día, en el mes del cierre (o el anterior)
+    let y=+IP.ref.slice(0,4), m=+IP.ref.slice(5,7); const day=+t.date.slice(8,10);
+    let s = y+'-'+pad(m)+'-'+pad(Math.min(day, ipDim(y,m)));
+    if(s > IP.ref){ m--; if(m<1){ m=12; y--; } s = y+'-'+pad(m)+'-'+pad(Math.min(day, ipDim(y,m))); }
+    return s < t.date ? t.date : s;
+  }
+  const ym = w.slice(2);
+  for(const c of [IP.meta.venc, IP.meta.cierre, today()]) if(c && c.startsWith(ym)) return c;
+  return ym+'-01';
+}
+function ipRate(){ const n = parseAmount($('ipRate').value); return n>0 ? n : 0; }
+function ipArs(r, rate){ return r.t.cur==='USD' ? (rate ? Math.round(r.t.amount*rate*100)/100 : null) : r.t.amount; }
+function ipBucketOpts(sel, val, ph){
+  sel.replaceChildren();
+  if(ph || !val) sel.append(el('option',{value:'',text: ph || 'Elegí un sobre'}));
+  state.buckets.forEach(b => sel.append(el('option',{value:b.id,text:b.name})));
+  sel.value = val || '';
+}
+function ipPaint(r){
+  const b = state.buckets.find(x=>x.id===r.bucket);
+  r.sel.classList.toggle('need', !r.bucket);
+  r.sel.style.setProperty('--c', b ? b.color : 'var(--line)');
+  if(r.bucket && r.sel.querySelector('option[value=""]')) ipBucketOpts(r.sel, r.bucket);
+  r.row.classList.toggle('off', !r.on);
+  r.cb.checked = r.on;
+}
+function ipRender(){
+  const list = $('ipList'); list.replaceChildren();
+  const rate = ipRate();
+  IP.rows.forEach((r,i) => {
+    const t = r.t, id = 'ipc'+i;
+    const sub = [ipFmtD(ipDate(r))];
+    if(t.cuota) sub.push('Cuota '+t.cuota.join(' de '));
+    if(t.cur==='USD') sub.push('US$ '+ipUsd(t.orig || t.amount));
+    if(t.kind==='cargo') sub.push('Cargo de la tarjeta');
+    const cb = el('input',{type:'checkbox',id});
+    const lab = el('label',{for:id,class:'t'},[el('b',{text:t.name}), el('small',{text:sub.join(' · ')})]);
+    if(r.note) lab.append(el('em',{text:r.note}));
+    const a = ipArs(r, rate);
+    const amt = el('span',{class:'amt num',text: a!=null ? money(a) : 'US$ '+ipUsd(t.amount)});
+    const sel = el('select',{'aria-label':'Sobre para '+t.name});
+    ipBucketOpts(sel, r.bucket);
+    const row = el('div',{class:'ip-row'},[cb, lab, amt, sel]);
+    r.cb=cb; r.sel=sel; r.row=row; r.lab=lab;
+    cb.onchange = () => { r.on = cb.checked; ipPaint(r); ipTotals(); };
+    sel.onchange = () => {
+      r.bucket = sel.value; r.manual = true;
+      // los demás gastos del mismo comercio van al mismo sobre
+      const k = IPX.keys(t.desc).k2;
+      if(k) IP.rows.forEach(o => { if(o!==r && !o.manual && IPX.keys(o.t.desc).k2===k){ o.bucket = r.bucket; ipPaint(o); } });
+      ipPaint(r); ipTotals();
+    };
+    ipPaint(r);
+    list.append(row);
+  });
+  ipTotals();
+}
+function ipTotals(){
+  const rate = ipRate();
+  let n=0, sum=0, needB=0, needR=0;
+  IP.rows.forEach(r => { if(!r.on) return; const a = ipArs(r, rate); if(a==null){ needR++; return; } if(!r.bucket){ needB++; return; } n++; sum+=a; });
+  const b = $('ipNext');
+  b.disabled = !!(needR || needB || !n);
+  b.textContent = needR ? 'Falta la cotización del dólar' : needB ? (needB===1 ? 'Elegí el sobre que falta' : 'Elegí los '+needB+' sobres que faltan') : !n ? 'Marcá al menos un gasto' : 'Anotar '+n+(n===1?' gasto':' gastos')+' · '+money(sum);
+  $('ipBulk').hidden = !needB;
+  if(needB){ $('ipBulkTxt').textContent = needB===1 ? '1 gasto marcado no tiene sobre.' : needB+' gastos marcados no tienen sobre.'; ipBucketOpts($('ipBulkSel'), '', 'Ponerlos en…'); }
+  const on = IP.rows.filter(r=>r.on).length;
+  $('ipCount').textContent = on+' de '+IP.rows.length+' marcados';
+}
+async function ipImport(){
+  const rate = ipRate(), rules = ipRules(), batch = 'b'+Date.now().toString(36), now = Date.now(), list = [];
+  IP.rows.forEach((r,i) => {
+    if(!r.on || !r.bucket) return;
+    const a = ipArs(r, rate); if(a==null) return;
+    const t = r.t;
+    const note = t.name + (t.cuota ? ' · cuota '+t.cuota.join('/') : '') + (t.cur==='USD' ? ' · US$ '+ipUsd(t.orig || t.amount) : '');
+    list.push({type:'out', amount:a, bucket:r.bucket, note:note.slice(0,80), date:ipDate(r), createdAt:now+i, imp:r.fp, impB:batch});
+    const {k2,k1} = IPX.keys(t.desc); if(k2) rules[k2] = r.bucket; if(k1) rules['1:'+k1] = r.bucket;
+  });
+  if(!list.length) return;
+  const b = $('ipNext'); b.disabled = true; b.textContent = 'Anotando…';
+  try{
+    if(store.addMany) await store.addMany(list); else for(const m of list) await store.add(m);
+  }catch(e){ ipTotals(); $('ipSkip').textContent = 'No se pudo guardar. Probá de nuevo en un momento.'; return; }
+  const ks = Object.keys(rules); if(ks.length>800) ks.slice(0, ks.length-800).forEach(k => delete rules[k]);
+  LS.set('rinde.imp.reglas', rules);
+  LS.set('rinde.imp.modo', $('ipWhen').value==='compra' ? 'compra' : 'pago');
+  const byM = {}; list.forEach(m => { const k=m.date.slice(0,7); byM[k]=(byM[k]||0)+1; });
+  const months = Object.keys(byM).sort((x,y)=>byM[y]-byM[x] || y.localeCompare(x));
+  const sum = list.reduce((s,m)=>s+m.amount,0);
+  IP.batch = batch; IP.done = {month: months[0]};
+  $('ipDoneTxt').textContent = 'Anotamos '+list.length+(list.length===1?' gasto':' gastos')+' por '+money(sum)+(months.length>1 ? ', repartidos en '+months.length+' meses.' : ' en '+mName(months[0])+'.')+' Rinde recuerda el sobre de cada comercio para la próxima.';
+  ipStep(3);
+}
+async function ipUndo(){
+  const ids = (tourSB ? [] : state.movs).filter(m => m.impB===IP.batch).map(m => m.id);
+  $('ipPrev').disabled = true;
+  try{
+    if(store.delMany) await store.delMany(ids); else for(const id of ids) await store.del(id);
+    IP.batch = null;
+    $('ipT3').textContent = 'Importación deshecha';
+    $('ipDoneTxt').textContent = 'Borramos los gastos que se habían anotado. Tus datos quedaron como antes.';
+    document.querySelector('#imp .okc').textContent = '↺';
+    $('ipPrev').hidden = true; $('ipNext').textContent = 'Cerrar';
+  }catch(e){ $('ipDoneTxt').textContent = 'No se pudo deshacer. Podés borrar los gastos desde Movimientos.'; }
+  finally{ $('ipPrev').disabled = false; }
+}
+$('ipOpen').onclick = ipOpen; $('ipOpen2').onclick = ipOpen;
+$('ipClose').onclick = ipClose; $('ipBackdrop').onclick = ipClose;
+$('ipPick').onclick = () => $('ipFile').click();
+$('ipFile').onchange = () => { const f = $('ipFile').files[0]; if(f) ipRead(f); };
+$('ipPwGo').onclick = () => { const pw = $('ipPwIn').value; if(pw) ipRead(IP.file, pw); else $('ipPwIn').focus(); };
+$('ipPwIn').addEventListener('keydown', e => { if(e.key==='Enter'){ e.preventDefault(); $('ipPwGo').click(); } });
+$('ipTextGo').onclick = () => { const t = $('ipText').value.trim(); if(!t){ $('ipText').focus(); return; } ipLoaded(IPX.parsePasted(t, {today:today()}), 'paste'); };
+['dragover','dragenter'].forEach(ev => $('ipPick').addEventListener(ev, e => { e.preventDefault(); $('ipPick').classList.add('over'); }));
+['dragleave','drop'].forEach(ev => $('ipPick').addEventListener(ev, () => $('ipPick').classList.remove('over')));
+$('ipPick').addEventListener('drop', e => { e.preventDefault(); const f = e.dataTransfer && e.dataTransfer.files[0]; if(f) ipRead(f); });
+$('ipWhen').onchange = () => ipRender();
+$('ipRate').oninput = () => { const n = ipRate(); if(n) LS.set('rinde.imp.dolar', $('ipRate').value.trim()); const rate=n; IP.rows.forEach(r => { if(r.t.cur==='USD' && r.row){ const a=ipArs(r,rate); r.row.querySelector('.amt').textContent = a!=null ? money(a) : 'US$ '+ipUsd(r.t.amount); } }); ipTotals(); };
+$('ipBulkSel').onchange = () => { const v = $('ipBulkSel').value; if(!v) return; IP.rows.forEach(r => { if(r.on && !r.bucket){ r.bucket=v; ipPaint(r); } }); ipTotals(); };
+$('ipAll').onclick = () => { IP.rows.forEach(r => { r.on=true; ipPaint(r); }); ipTotals(); };
+$('ipNone').onclick = () => { IP.rows.forEach(r => { r.on=false; ipPaint(r); }); ipTotals(); };
+$('ipPrev').onclick = () => { if(IP.step===2) ipStep(1); else if(IP.step===3 && IP.batch) ipUndo(); };
+$('ipNext').onclick = () => {
+  if(IP.step===2) return ipImport();
+  if(IP.step===3){
+    const m = IP.done && IP.batch ? IP.done.month : null;
+    ipClose();
+    if(m){ state.month = m; state.confirmId = null; draw(); }
+    if(IP.batch){ if(tabsOn()) showTab('movs'); else goTo($('h-mov').closest('.panel')); }
+  }
+};
+document.addEventListener('keydown', e => { if(e.key==='Escape' && !$('imp').hidden) ipClose(); });
 
 // ---------- asistente de porcentajes ----------
 // Rinde Pro: cuando exista, la versión gratis puede limitar los gastos fijos cambiando este número.
@@ -1412,6 +2289,10 @@ const HELP = [
       '<p>En <b>Movimientos</b>, tocá la ✕ del que querés sacar y confirmá con <b>Borrar</b>. Si era un error de monto, borralo y volvé a cargarlo bien.</p>', 'movs', 'Ir a Movimientos'],
     ['¿Puedo anotar algo de otro día?', 'fecha dia ayer otro',
       '<p>Sí: cambiá la <b>Fecha</b> antes de agregarlo. Si es de otro mes, Rinde te muestra ese mes.</p>', 'gasto', 'Ir a Anotar'],
+    ['¿Puedo cargar los gastos de mi tarjeta de una?', 'tarjeta credito resumen importar pdf excel csv banco visa mastercard naranja amex cuotas dolares',
+      '<p>Sí. En <b>Anotar</b>, tocá <b>Importar resumen de la tarjeta</b> y elegí el PDF del resumen, o el Excel o CSV de movimientos que bajás del banco. Rinde encuentra los gastos, le sugiere un sobre a cada uno y vos revisás antes de anotarlos.</p><p>Los pagos de la tarjeta y las devoluciones no se anotan. Si hay gastos en dólares, te pide la cotización. El archivo se lee en tu celular y no se sube a ningún lado.</p>', 'importar', 'Importar un resumen'],
+    ['¿Qué pasa si importo el mismo resumen dos veces?', 'repetido duplicado dos veces importar otra vez',
+      '<p>Rinde se da cuenta: los gastos que ya importaste aparecen desmarcados con el aviso <b>Ya lo importaste antes</b>. Si anotaste alguno a mano, también te avisa. Y justo después de importar podés tocar <b>Deshacer</b>.</p>', 'importar', 'Importar un resumen'],
     ['¿Cómo veo otros meses?', 'mes meses anterior historial',
       '<p>Usá las flechas ‹ › al lado del nombre del mes, arriba de todo. Cada mes tiene sus propios ingresos y gastos.</p>', 'meses', 'Mostrame dónde'],
   ]],
@@ -1509,6 +2390,7 @@ $('hpList').addEventListener('click', e => {
   helpClose(false);
   if(go==='tour'){ tourStart(); return; }
   if(go==='wizard'){ wzOpen(); return; }
+  if(go==='importar'){ ipOpen(); return; }
   if(go==='progreso'){ goTo($('prog')); return; }
   if(go==='gasto' || go==='ingreso'){ setType(go==='gasto'?'out':'in'); goTo($('form'), $('f-amt')); return; }
   if(go==='movs'){ goTo($('h-mov').closest('.panel')); return; }
