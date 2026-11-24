@@ -467,9 +467,9 @@ if(document.visibilityState==='visible')whenReady();else document.addEventListen
 .tour-b,.tour-full{position:fixed;pointer-events:auto;touch-action:none}
 html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:none}
 .tour-dim{touch-action:none}
-.tour-skip{position:fixed;left:50%;bottom:max(16px,env(safe-area-inset-bottom));translate:-50% 0;pointer-events:auto;min-height:46px;padding:10px 24px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.5);color:#fff;font:700 .98rem var(--f-body);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);white-space:nowrap}
+.tour-skip{position:fixed;left:50%;bottom:calc(var(--tabh,0px) + 14px + env(safe-area-inset-bottom,0px));translate:-50% 0;pointer-events:auto;min-height:46px;padding:10px 24px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.5);color:#fff;font:700 .98rem var(--f-body);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);white-space:nowrap}
 .tour-skip:hover{background:rgba(0,0,0,.7)}
-.tour.is-center .tour-skip{display:none}
+.tour.is-center .tour-skip,.tour.hide-skip .tour-skip{display:none}
 .tour.no-target .tour-dim{display:block}
 .tour.no-target .tour-ring,.tour.no-target .tour-b,.tour.no-target .tour-arrow{display:none}
 .tour.no-target .tour-tip{top:50%!important;left:50%!important;translate:-50% -50%}
@@ -521,6 +521,69 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
     <div class="tour-acts"><button class="btn ghost small" type="button" id="tourDo"></button><button class="btn small" type="button" id="tourNext"></button></div>
   </div>
 </div>
+<style>
+/* ---- pestañas abajo (celular) ---- */
+:root{--tabh:0px}
+.tabbar{display:none}
+.more{display:grid}
+.more>*{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:52px;border:0;border-bottom:1px solid var(--line);background:transparent;
+  padding:0 2px;font:600 1rem var(--f-body);color:var(--fg);text-decoration:none;text-align:left;width:100%}
+.more>*:last-child{border-bottom:0}
+.more span{color:var(--muted);font-size:1.4rem;line-height:1}
+@media (min-width:860px){#recentSec{display:none!important}}
+@media (max-width:859px){
+  :root{--tabh:64px}
+  body{padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px))}
+  .cols>div{display:contents!important}
+  .envsec{order:-1}
+  body:not([data-tab]) [data-tab]:not([data-tab="inicio"]),
+  body[data-tab="inicio"] [data-tab]:not([data-tab="inicio"]),
+  body[data-tab="sobres"] [data-tab]:not([data-tab="sobres"]),
+  body[data-tab="anotar"] [data-tab]:not([data-tab="anotar"]),
+  body[data-tab="movs"] [data-tab]:not([data-tab="movs"]),
+  body[data-tab="mas"] [data-tab]:not([data-tab="mas"]){display:none!important}
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:end;
+    height:calc(var(--tabh) + env(safe-area-inset-bottom,0px));padding:0 max(4px,env(safe-area-inset-right,0px)) env(safe-area-inset-bottom,0px) max(4px,env(safe-area-inset-left,0px));
+    background:color-mix(in srgb,var(--surface) 92%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line)}
+  .tabbar button{border:0;background:transparent;color:var(--muted);height:var(--tabh);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;font-size:.7rem;font-weight:600;padding:0 2px;min-width:0;-webkit-tap-highlight-color:transparent}
+  .tabbar button>span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tabbar svg{width:24px;height:24px;flex:none}
+  .tabbar button[aria-current="page"]{color:var(--fg)}
+  .tabbar button[aria-current="page"] svg{color:var(--accent)}
+  .tabbar .plus{justify-content:flex-end;padding-bottom:9px}
+  .tabbar .plus .pc{width:54px;height:54px;border-radius:50%;background:var(--ink);color:var(--ink-fg);display:grid;place-items:center;margin-bottom:2px;
+    box-shadow:0 6px 18px rgba(0,0,0,.28);border:3px solid var(--bg);transition:transform .15s}
+  .tabbar .plus .pc svg{color:inherit!important;width:26px;height:26px}
+  .tabbar .plus[aria-current="page"] .pc{background:var(--accent);color:#1d1a12}
+  .tabbar .plus:active .pc{transform:scale(.94)}
+}
+/* ---- progreso y racha ---- */
+.prog{gap:16px}
+.streak{display:flex;align-items:center;gap:12px;padding:12px;border-radius:14px;background:var(--surface-2)}
+.streak .fl{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 24%,transparent);color:var(--accent)}
+.streak.off .fl{background:var(--surface);color:var(--muted)}
+.streak .sk{display:grid;gap:2px;min-width:0}
+.streak b{font-family:var(--f-display);font-size:1.08rem;font-weight:700}
+.streak small{color:var(--muted);font-size:.86rem;line-height:1.35}
+.pg-head{display:grid;gap:4px}
+.pg-cap{font-size:.85rem;color:var(--muted);font-weight:600}
+.pg-big{font-family:var(--f-display);font-weight:800;font-size:2.1rem;line-height:1.05;letter-spacing:-.02em}
+.pg-big.up{color:var(--good)}.pg-big.down{color:var(--bad)}
+.pg-sub{margin:0;color:var(--muted);font-size:.9rem;line-height:1.45}
+.pg-chart{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.pg-col{display:grid;grid-template-rows:auto 120px auto;gap:6px;justify-items:center;min-width:0}
+.pg-v{font-size:.68rem;color:var(--muted);white-space:nowrap;font-weight:600}
+.pg-area{position:relative;width:100%;height:120px}
+.pg-zero{position:absolute;left:0;right:0;height:1px;background:var(--line)}
+.pg-bar{position:absolute;left:50%;width:min(64%,46px);translate:-50% 0;border-radius:6px;background:#2f7d6d}
+.pg-bar.neg{background:var(--bad)}
+.pg-col.cur .pg-bar{opacity:.6}
+.pg-m{font-size:.78rem;color:var(--muted);font-weight:600}
+.pg-col.cur .pg-m{color:var(--fg)}
+.pg-note{margin:0;font-size:.8rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.pg-bar{transition:top .3s ease,height .3s ease}}
+</style>
 <div class="wrap">
   <header class="top">
     <div class="brand">
@@ -537,7 +600,7 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
 
   <div id="status" class="note" hidden></div>
 
-  <section class="wizcta" id="wizCta" hidden aria-labelledby="h-wizcta">
+  <section class="wizcta" id="wizCta" data-tab="inicio" hidden aria-labelledby="h-wizcta">
     <div class="ic" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f0b55a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg></div>
     <h2 id="h-wizcta">Armá tus sobres según tus gastos</h2>
     <p>Contale a Rinde cuánto cobrás y lo que pagás sí o sí (alquiler, colectivo, luz…) y te calcula los porcentajes.</p>
@@ -545,7 +608,7 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
   </section>
 
 
-  <section class="hero" aria-label="Resumen del mes">
+  <section class="hero" data-tab="inicio" aria-label="Resumen del mes">
     <div>
       <div class="lbl">Te queda este mes</div>
       <div id="left" class="big num">$ 0</div>
@@ -559,9 +622,25 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
     <div class="legend" id="legend"></div>
   </section>
 
+  <section class="panel prog" id="prog" data-tab="inicio" aria-labelledby="h-prog">
+    <h2 id="h-prog">Tu progreso</h2>
+    <div class="streak off" id="streak">
+      <span class="fl" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12.4 2.2c.7 3.3-1.6 4.9-1.6 7.7 0 1.4.9 2.4 2.1 2.4 1.5 0 2.3-1.3 1.9-3.3 2.5 1.9 4.1 4.5 4.1 7.2A7 7 0 0 1 12 23a7 7 0 0 1-7-6.8c0-4.3 3.1-6.4 4.5-9.1.9-1.7 1.9-3.3 2.9-4.9Z"/></svg></span>
+      <div class="sk"><b id="skT">Arrancá tu racha</b><small id="skS"></small></div>
+    </div>
+    <div class="pg-head"><div class="pg-cap" id="pgCap"></div><div class="pg-big num" id="pgBig"></div><p class="pg-sub" id="pgSub"></p></div>
+    <div class="pg-chart" id="pgChart" role="img" aria-label="Lo que te quedó cada mes"></div>
+    <p class="pg-note">Barras: lo que te quedó cada mes (lo que cobraste menos lo que gastaste).</p>
+  </section>
+
+  <section class="panel" id="recentSec" data-tab="inicio" aria-labelledby="h-recent">
+    <div class="row"><h2 id="h-recent">Últimos movimientos</h2><button class="btn ghost small" type="button" id="recentAll">Ver todos</button></div>
+    <div class="list" id="recent"></div>
+  </section>
+
   <div class="cols">
     <div style="display:grid;gap:20px;min-width:0">
-      <form class="panel" id="form" autocomplete="off">
+      <form class="panel" id="form" data-tab="anotar" autocomplete="off">
         <h2>Anotar</h2>
         <div class="seg" role="group" aria-label="Tipo de movimiento">
           <button type="button" data-t="out" aria-pressed="true">Gasto</button>
@@ -585,7 +664,7 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
         <div id="f-msg" class="hint" aria-live="polite">Los ingresos se reparten solos entre tus sobres según los porcentajes.</div>
       </form>
 
-      <section class="panel" aria-labelledby="h-edit">
+      <section class="panel" data-tab="sobres" aria-labelledby="h-edit">
         <div class="row"><h2 id="h-edit">Porcentajes</h2>
           <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><button class="btn ghost small" id="wizOpen2" type="button">Calcular por mis gastos</button><button class="btn ghost small" id="toggleEdit" type="button">Editar</button></div></div>
         <div id="wzDone" class="wz-done" hidden aria-live="polite"></div>
@@ -604,7 +683,7 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
         </div>
       </section>
 
-      <section class="panel" aria-labelledby="h-bk">
+      <section class="panel" data-tab="mas" aria-labelledby="h-bk">
         <h2 id="h-bk">Copia de seguridad</h2>
         <p class="hint">Tus datos viven solo en este celular. Guardá una copia en Drive o mandatela por WhatsApp para no perderlos si cambiás de teléfono o desinstalás la app.</p>
         <div class="row" style="justify-content:flex-start;gap:8px;flex-wrap:wrap">
@@ -621,23 +700,39 @@ html.touring,html.touring body{overflow:hidden!important;overscroll-behavior:non
         </div>
         <div id="bkMsg" class="hint" aria-live="polite"></div>
       </section>
+
+      <section class="panel" data-tab="mas" aria-labelledby="h-more">
+        <h2 id="h-more">Ayuda</h2>
+        <div class="more">
+          <button type="button" id="moreHelp">Preguntas frecuentes<span aria-hidden="true">›</span></button>
+          <button type="button" id="moreTour">Ver el recorrido guiado<span aria-hidden="true">›</span></button>
+          <a href="privacidad/">Política de privacidad<span aria-hidden="true">›</span></a>
+        </div>
+      </section>
     </div>
 
     <div style="display:grid;gap:20px;min-width:0">
-      <section aria-labelledby="h-env" style="display:grid;gap:12px">
+      <section class="envsec" data-tab="sobres" aria-labelledby="h-env" style="display:grid;gap:12px">
         <h2 id="h-env" style="font-size:1.1rem">Tus sobres</h2>
         <div class="env" id="env"></div>
       </section>
-      <section class="panel" aria-labelledby="h-mov">
+      <section class="panel" data-tab="movs" aria-labelledby="h-mov">
         <div class="row"><h2 id="h-mov">Movimientos</h2><span id="mcount" class="hint num"></span></div>
         <div class="list" id="list"></div>
       </section>
     </div>
   </div>
 </div>
+<nav class="tabbar" id="tabbar" aria-label="Secciones">
+  <button type="button" data-go-tab="inicio" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9v11h4.5v-6h4v6h4.5V9"/></svg><span>Inicio</span></button>
+  <button type="button" data-go-tab="sobres" aria-current="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.5 7 8.5 6 8.5-6"/></svg><span>Sobres</span></button>
+  <button type="button" class="plus" data-go-tab="anotar" aria-current="false"><span class="pc"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span>Anotar</span></button>
+  <button type="button" data-go-tab="movs" aria-current="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6h12M9 12h12M9 18h12"/><circle cx="4" cy="6" r="1.2" fill="currentColor"/><circle cx="4" cy="12" r="1.2" fill="currentColor"/><circle cx="4" cy="18" r="1.2" fill="currentColor"/></svg><span>Movimientos</span></button>
+  <button type="button" data-go-tab="mas" aria-current="false"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg><span>Más</span></button>
+</nav>
 <footer class="foot">
   <div class="in">
-    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.16</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
+    <span class="app">Rinde <small style="font-weight:500;opacity:.7">v1.17</small> · <a href="privacidad/" style="color:inherit;font-family:var(--f-body);font-weight:500;font-size:.85rem">Privacidad</a></span>
     <a class="hxb" href="https://hexacode.com.ar" target="_blank" rel="noopener" aria-label="Desarrollado por Hexacode. Abre hexacode.com.ar"><span class="by">Desarrollado por</span><svg class="hx" viewBox="470.8 120.5 464.3 530" aria-hidden="true"><use href="#mkmono"/></svg><span class="nm">Hexacode</span></a>
   </div>
 </footer>
@@ -842,6 +937,79 @@ function draw(){
       action
     ]));
   });
+  drawExtra(ms, bmap);
+}
+
+// ---------- progreso, racha y últimos movimientos ----------
+const ymAdd = (ym, d) => { let y=+ym.slice(0,4), m=+ym.slice(5,7)+d; while(m<1){m+=12;y--;} while(m>12){m-=12;y++;} return y+'-'+pad(m); };
+const mName = (ym, f) => new Date(+ym.slice(0,4), +ym.slice(5,7)-1, 1).toLocaleDateString('es-AR',{month:f||'long'}).replace('.','');
+const cap1 = s => s.charAt(0).toUpperCase()+s.slice(1);
+const dayKey = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const dayPrev = s => { const d=new Date(s+'T12:00:00'); d.setDate(d.getDate()-1); return dayKey(d); };
+const compact = n => { const a=Math.abs(n), sg=n<0?'−':''; if(a>=1e6) return sg+(a/1e6).toLocaleString('es-AR',{maximumFractionDigits:a>=1e7?0:1})+' M'; if(a>=1e3) return sg+Math.round(a/1e3)+' mil'; return sg+Math.round(a); };
+function monthSum(src, ym){ let inc=0, out=0, n=0; src.forEach(m=>{ if((m.date||'').startsWith(ym)){ n++; if(m.type==='in') inc+=m.amount; else out+=m.amount; } }); return {inc, out, s:inc-out, has:n>0}; }
+function streakInfo(){
+  const src = isDemo() ? [] : state.movs;
+  const days = new Set(src.map(m => m.createdAt ? dayKey(new Date(m.createdAt)) : m.date).filter(Boolean));
+  const t = today(), y = dayPrev(t);
+  let n = 0;
+  for(let d = days.has(t) ? t : (days.has(y) ? y : null); d && days.has(d); d = dayPrev(d)) n++;
+  let best = 0, run = 0, prev = null;
+  [...days].sort().forEach(d => { run = (prev && dayPrev(d)===prev) ? run+1 : 1; best = Math.max(best, run); prev = d; });
+  return {n, today:days.has(t), best};
+}
+function drawExtra(ms, bmap){
+  // racha: días seguidos anotando algo
+  const st = streakInfo();
+  $('streak').classList.toggle('off', !st.today);
+  $('skT').textContent = st.n ? 'Racha de '+st.n+(st.n===1?' día':' días') : 'Arrancá tu racha';
+  let sub = st.n ? (st.today ? 'Anotaste hoy. ¡Seguí así!' : 'Anotá algo hoy para no cortarla.') : 'Anotá un gasto o un ingreso hoy.';
+  if(st.best > st.n && st.best > 1) sub += ' Tu mejor racha: '+st.best+' días.';
+  $('skS').textContent = sub;
+
+  // comparación entre los dos últimos meses completos
+  const src = isDemo() ? demoMovs() : state.movs;
+  const cur = today().slice(0,7);
+  const last = state.month >= cur ? ymAdd(state.month,-1) : state.month, before = ymAdd(last,-1);
+  const A = monthSum(src, last), B = monthSum(src, before);
+  const big=$('pgBig'), cap=$('pgCap');
+  big.className='pg-big num'; big.textContent=''; cap.textContent='';
+  if(A.has && B.has){
+    const diff = A.s - B.s;
+    cap.textContent = cap1(mName(last))+' comparado con '+mName(before);
+    if(B.s>0){ const p=Math.round(diff/B.s*100); big.textContent=(p>0?'+':p<0?'−':'')+Math.abs(p)+' %'; }
+    else big.textContent=(diff>=0?'+':'−')+money(Math.abs(diff));
+    if(diff) big.classList.add(diff>0?'up':'down');
+    const t1 = s => s>=0 ? 'te quedaron '+money(s) : 'gastaste '+money(-s)+' más de lo que cobraste';
+    $('pgSub').textContent = 'En '+mName(last)+' '+t1(A.s)+'; en '+mName(before)+', '+t1(B.s)+'.';
+  } else {
+    $('pgSub').textContent = 'Cuando tengas dos meses completos anotados, acá vas a ver si te queda más o menos plata que antes.';
+  }
+  big.hidden = !big.textContent; cap.hidden = !cap.textContent;
+
+  // gráfico de los últimos 6 meses
+  const data = []; for(let k=5;k>=0;k--){ const ym=ymAdd(state.month,-k); data.push({ym, cur: ym===cur, ...monthSum(src, ym)}); }
+  const maxP=Math.max(0,...data.map(d=>d.s)), maxN=Math.max(0,...data.map(d=>-d.s)), tot=(maxP+maxN)||1, H=120;
+  const zero = maxN===0 ? H : maxP/tot*H;
+  const ch=$('pgChart'); ch.replaceChildren();
+  data.forEach(d=>{
+    const area = el('div',{class:'pg-area'},[el('i',{class:'pg-zero',style:'top:'+zero+'px'})]);
+    if(d.has && d.s!==0){ const h=Math.max(4, Math.abs(d.s)/tot*H); area.append(el('i',{class:'pg-bar'+(d.s<0?' neg':''), style: d.s>0 ? `top:${zero-h}px;height:${h}px` : `top:${zero}px;height:${h}px`})); }
+    ch.append(el('div',{class:'pg-col'+(d.cur?' cur':'')},[el('div',{class:'pg-v num',text: d.has ? compact(d.s) : '—'}), area, el('div',{class:'pg-m',text: mName(d.ym,'short')})]));
+  });
+  ch.setAttribute('aria-label','Lo que te quedó cada mes: '+data.map(d=>mName(d.ym)+' '+(d.has?money(d.s):'sin datos')).join(', '));
+
+  // últimos 3 movimientos del mes (solo en Inicio del celular)
+  const r=$('recent'); r.replaceChildren();
+  if(!ms.length) r.append(el('div',{class:'empty',text:'Todavía no anotaste nada este mes.'}));
+  ms.slice(0,3).forEach(m=>{
+    const b=bmap[m.bucket], color = m.type==='in' ? 'var(--good)' : (b?b.color:'var(--muted)');
+    const d=new Date(m.date+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+    r.append(el('div',{class:'mov'},[el('span',{class:'dot',style:`background:${color}`}),
+      el('div',{class:'t'},[el('b',{text:m.note||(m.type==='in'?'Ingreso':'Gasto')}), el('small',{text:(m.type==='in'?'Ingreso':(b?b.name:'Sin sobre'))+' · '+d})]),
+      el('span',{class:'amt num '+m.type,text:(m.type==='in'?'+ ':'− ')+money(m.amount)}), el('span')]));
+  });
+  $('recentAll').hidden = !ms.length;
 }
 
 // ---------- acciones ----------
@@ -1137,9 +1305,43 @@ $('wzNext').onclick = async () => {
     state.buckets = buckets; state.hasCfg = true; wzClose(); draw();
     $('wzDone').textContent = 'Listo: tus sobres se armaron según tus gastos.'; $('wzDone').hidden=false;
     setTimeout(()=>{ $('wzDone').hidden=true; }, 6000);
-    $('h-edit').scrollIntoView({behavior:'smooth', block:'center'});
+    showTab('sobres',{scroll:false}); $('h-edit').scrollIntoView({behavior:'smooth', block:'center'});
   }catch(e){ $('wzResHint').textContent='No se pudo guardar. Probá de nuevo.'; }
 };
+
+// ---------- pestañas (celular) ----------
+const TABS = ['inicio','sobres','anotar','movs','mas'];
+const mqTabs = matchMedia('(max-width:859px)');
+const tabsOn = () => mqTabs.matches;
+const tabH = () => tabsOn() ? ($('tabbar').offsetHeight||0) : 0;
+const inFrame = (() => { try{ return window.top !== window.self; }catch(e){ return true; } })();
+let curTab = 'inicio';
+function showTab(t, o={}){
+  if(!TABS.includes(t)) t='inicio';
+  const prev = curTab; curTab = t;
+  document.body.dataset.tab = t;
+  document.querySelectorAll('#tabbar [data-go-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.goTab===t ? 'page' : 'false'));
+  // El botón "atrás" del celular vuelve a Inicio antes de cerrar la app.
+  if(o.hist!==false && !inFrame && tabsOn() && t!==prev){
+    try{
+      const pushed = history.state && history.state.rinde;
+      if(t==='inicio'){ if(pushed) history.back(); }
+      else if(pushed) history.replaceState({rinde:t},'');
+      else history.pushState({rinde:t},'');
+    }catch(e){}
+  }
+  if(o.scroll!==false) window.scrollTo(0,0);
+}
+document.querySelectorAll('#tabbar [data-go-tab]').forEach(b => b.addEventListener('click', () => {
+  const t = b.dataset.goTab;
+  if(T.ui){ if(T.on){ showTab(t,{hist:false,scroll:false}); tourEvt('tab', t); } return; }
+  if(t===curTab){ window.scrollTo({top:0, behavior: reduceMo() ? 'auto' : 'smooth'}); return; }
+  showTab(t);
+}));
+addEventListener('popstate', e => { if(T.ui) return; showTab((e.state && e.state.rinde) || 'inicio', {hist:false}); });
+$('recentAll').onclick = () => showTab('movs');
+$('moreHelp').onclick = () => helpOpen();
+$('moreTour').onclick = () => tourStart();
 
 // ---------- ayuda guiada ----------
 const HELP = [
@@ -1157,7 +1359,7 @@ const HELP = [
   ]],
   ['Anotar', [
     ['¿Cómo anoto un gasto?', 'gasto cargar agregar compra',
-      '<ol><li>En <b>Anotar</b>, dejá elegido <b>Gasto</b>.</li><li>Escribí el monto y elegí el sobre.</li><li>Si querés, agregá un detalle (ej: supermercado) y tocá <b>Agregar gasto</b>.</li></ol>', 'gasto', 'Anotar un gasto'],
+      '<ol><li>Tocá <b>Anotar</b> (el + de abajo) y dejá elegido <b>Gasto</b>.</li><li>Escribí el monto y elegí el sobre.</li><li>Si querés, agregá un detalle (ej: supermercado) y tocá <b>Agregar gasto</b>.</li></ol>', 'gasto', 'Anotar un gasto'],
     ['¿Cómo anoto lo que cobré?', 'ingreso cobro sueldo cobrar',
       '<p>En <b>Anotar</b>, elegí <b>Ingreso</b>, escribí el monto y tocá <b>Agregar ingreso</b>. Rinde lo reparte solo entre tus sobres.</p>', 'ingreso', 'Anotar un ingreso'],
     ['Me equivoqué, ¿cómo borro un movimiento?', 'borrar error equivoque eliminar editar corregir',
@@ -1190,6 +1392,8 @@ const HELP = [
       '<p>Se borran tus datos, salvo que tengas una copia guardada. Antes de desinstalar o cambiar de celular, hacé una copia.</p>', 'copia', 'Hacer una copia'],
   ]],
   ['La app', [
+    ['¿Qué es la racha y Tu progreso?', 'racha progreso grafico meses dias comparar mejorar',
+      '<p>La racha cuenta cuántos días seguidos anotaste algo. En <b>Tu progreso</b> ves cuánta plata te quedó cada mes y si te fue mejor o peor que el mes anterior.</p>', 'progreso', 'Ver mi progreso'],
     ['¿Funciona sin internet?', 'internet offline conexion datos',
       '<p>Sí. Después de abrirla una vez con internet, podés usarla sin conexión.</p>'],
     ['¿Cómo la pongo en modo oscuro?', 'oscuro tema claro noche',
@@ -1248,6 +1452,7 @@ function helpClose(restore){
 function flash(node){ if(!node) return; node.classList.remove('flash'); void node.offsetWidth; node.classList.add('flash'); setTimeout(()=>node.classList.remove('flash'), 1900); }
 function goTo(node, focusEl){
   if(!node) return;
+  const tb = node.closest('[data-tab]'); if(tb && tabsOn()) showTab(tb.dataset.tab, {scroll:false});
   node.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'start'});
   flash(node);
   if(focusEl) setTimeout(()=>focusEl.focus({preventScroll:true}), 450);
@@ -1258,10 +1463,11 @@ $('hpList').addEventListener('click', e => {
   helpClose(false);
   if(go==='tour'){ tourStart(); return; }
   if(go==='wizard'){ wzOpen(); return; }
+  if(go==='progreso'){ goTo($('prog')); return; }
   if(go==='gasto' || go==='ingreso'){ setType(go==='gasto'?'out':'in'); goTo($('form'), $('f-amt')); return; }
   if(go==='movs'){ goTo($('h-mov').closest('.panel')); return; }
   if(go==='sobres'){ goTo($('h-env').closest('section')); return; }
-  if(go==='copia'){ goTo($('h-bk').closest('.panel'), $('bkExport')); return; }
+  if(go==='copia'){ if($('h-bk')) goTo($('h-bk').closest('.panel'), $('bkExport')); return; }
   if(go==='editar'){ if($('editor').hidden) openEditor(); goTo($('h-edit').closest('.panel')); return; }
   if(go==='meses'){ window.scrollTo({top:0, behavior:'smooth'}); flash(document.querySelector('.month')); setTimeout(()=>$('next').focus({preventScroll:true}), 400); return; }
 });
@@ -1281,41 +1487,47 @@ const amtLabel = () => $('f-amt').closest('label');
 const amtOk = () => parseAmount($('f-amt').value) > 0;
 const cardOf = id => document.querySelectorAll('#env .card')[Math.max(0, state.buckets.findIndex(b=>b.id===id))];
 const bInfo = id => { const bs = compute().buckets; return bs.find(b=>b.id===id) || bs[0]; };
+const tabStep = s => !(s.skip && s.skip());
 const TOUR = [
   {id:'welcome', center:true},
-  {id:'hero', el:()=>document.querySelector('.hero'), t:'Esto es lo que te queda',
+  {id:'hero', tab:'inicio', el:()=>document.querySelector('.hero'), t:'Esto es lo que te queda',
     p:()=>'Acá arriba ves cuánta plata te queda en el mes. Ahora dice <b>'+money(0)+'</b> porque todavía no anotaste nada. Cada mes arranca de cero.'},
-  {id:'in', el:()=>segBtn('in'), act:true, wait:'type-in', t:'Primero, lo que cobrás',
+  {id:'nav', tab:'inicio', fixed:true, noSkip:true, skip:()=>!tabsOn(), el:()=>document.querySelector('#tabbar [data-go-tab="anotar"]'), act:true, wait:'tab-anotar',
+    t:'Las secciones de Rinde', p:'Abajo tenés todas las secciones. Para anotar plata, tocá <b>Anotar</b>.', doIt:()=>{ showTab('anotar',{hist:false,scroll:false}); return true; }},
+  {id:'in', tab:'anotar', el:()=>segBtn('in'), act:true, wait:'type-in', t:'Primero, lo que cobrás',
     p:'Cada vez que cobres, lo anotás como ingreso. Tocá <b>Ingreso</b>.', doIt:()=>{ setType('in'); return true; }},
-  {id:'inAmt', el:amtLabel, act:true, input:true, fill:'500.000', t:'¿Cuánto cobraste?',
+  {id:'inAmt', tab:'anotar', el:amtLabel, act:true, input:true, fill:'500.000', t:'¿Cuánto cobraste?',
     p:'Es de práctica: escribí un sueldo de mentira, por ejemplo <b>500.000</b>.'},
-  {id:'inAdd', el:()=>$('f-submit'), act:true, submit:true, fill:'500.000', t:'Guardalo',
+  {id:'inAdd', tab:'anotar', el:()=>$('f-submit'), act:true, submit:true, fill:'500.000', t:'Guardalo',
     p:'Tocá <b>Agregar ingreso</b>.'},
-  {id:'split', el:()=>cardOf(T.bucket), t:'Rinde lo repartió solo',
+  {id:'split', tab:'sobres', el:()=>cardOf(T.bucket), t:'Rinde lo repartió solo',
     p:()=>{ const b=bInfo(T.bucket); return 'Tu ingreso se repartió entre tus sobres según los porcentajes. A <b>'+esc(b.name)+'</b> le tocan <b>'+money(b.assigned)+'</b>, el '+b.pct+' %.'; }},
-  {id:'out', el:()=>segBtn('out'), act:true, wait:'type-out', t:'Ahora, un gasto',
+  {id:'out', tab:'anotar', el:()=>segBtn('out'), act:true, wait:'type-out', t:'Ahora, un gasto',
     p:'Cada vez que gastes algo, anotalo. Tocá <b>Gasto</b>.', doIt:()=>{ setType('out'); return true; }},
-  {id:'outAmt', el:()=>[amtLabel(), $('bucketWrap')], act:true, input:true, fill:'20.000', t:'¿Cuánto y de qué sobre?',
+  {id:'outAmt', tab:'anotar', el:()=>[amtLabel(), $('bucketWrap')], act:true, input:true, fill:'20.000', t:'¿Cuánto y de qué sobre?',
     p:()=>'Escribí un gasto de prueba, por ejemplo <b>20.000</b>. Abajo elegís de qué sobre sale: dejalo en <b>'+esc(bInfo(T.bucket).name)+'</b>.',
     enter:()=>{ $('f-bucket').value = T.bucket; }},
-  {id:'outAdd', el:()=>$('f-submit'), act:true, submit:true, fill:'20.000', t:'Guardalo',
+  {id:'outAdd', tab:'anotar', el:()=>$('f-submit'), act:true, submit:true, fill:'20.000', t:'Guardalo',
     p:'Tocá <b>Agregar gasto</b>.'},
-  {id:'spent', el:()=>cardOf(T.spentB||T.bucket), t:'Se descontó del sobre',
+  {id:'spent', tab:'sobres', el:()=>cardOf(T.spentB||T.bucket), t:'Se descontó del sobre',
     p:()=>{ const b=bInfo(T.spentB||T.bucket); return b.left<0
       ? 'Te pasaste por <b>'+money(-b.left)+'</b> en <b>'+esc(b.name)+'</b>: cuando gastás más de lo que tiene un sobre, la tarjeta se pone en rojo.'
       : 'A <b>'+esc(b.name)+'</b> ahora le quedan <b>'+money(b.left)+'</b>. Si gastás más de lo que tiene, la tarjeta se pone en rojo para avisarte.'; }},
-  {id:'list', el:()=>$('h-mov').closest('section'), t:'Todo queda anotado',
+  {id:'prog', tab:'inicio', el:()=>$('prog'), t:'Tu progreso',
+    p:'Acá ves tu racha de días seguidos anotando y cuánta plata te quedó cada mes. Anotá todos los días para no cortarla.'},
+  {id:'list', tab:'movs', el:()=>$('h-mov').closest('section'), t:'Todo queda anotado',
     p:'Acá ves los movimientos del mes. Si te equivocaste en uno, tocá la <b>✕</b> para borrarlo y cargalo de nuevo.'},
-  {id:'pct', el:()=>$('h-edit').closest('section'), t:'Tus porcentajes',
+  {id:'pct', tab:'sobres', el:()=>$('h-edit').closest('section'), t:'Tus porcentajes',
     p:'Acá cambiás cuánto va a cada sobre. Si no sabés qué poner, tocá <b>Calcular por mis gastos</b> y Rinde los arma por vos.'},
-  {id:'bk', el:()=>$('h-bk').closest('section'), t:'Guardá una copia',
+  {id:'bk', tab:'mas', skip:()=>!$('h-bk'), el:()=>$('h-bk').closest('section'), t:'Guardá una copia',
     p:'Tus datos viven solo en este celular. Cada tanto tocá <b>Guardar copia</b> y mandala a tu Drive o a tu WhatsApp.'},
   {id:'help', el:()=>$('helpOpen'), t:'Si tenés dudas',
     p:'Tocá el <b>?</b> y encontrás las respuestas a las preguntas más comunes. Desde ahí también podés repetir este recorrido.'},
   {id:'end', center:true},
 ];
 const tIdx = id => TOUR.findIndex(s=>s.id===id);
-const NSTEPS = TOUR.length - 2;
+const tSteps = () => TOUR.filter(s => !s.center && tabStep(s));
+const nextIdx = i => { let j=i+1; while(j<TOUR.length-1 && !TOUR[j].center && !tabStep(TOUR[j])) j++; return j; };
 
 function tourOpenUI(){
   if(!$('tourIc').firstChild){ const ic=document.querySelector('.appicon'); if(ic) $('tourIc').append(ic.cloneNode(true)); }
@@ -1345,8 +1557,9 @@ function tourStart(){
     async del(id){ sbMovs=sbMovs.filter(x=>x.id!==id); state.movs=sbMovs; draw(); }
   };
   state.movs=[]; T.on=true; draw();
+  showTab('inicio',{hist:false});
   if(!T.ui) tourOpenUI();
-  tourGo(1);
+  tourGo(nextIdx(0));
 }
 // Vuelve todo como estaba: lo de práctica nunca se guardó.
 function tourClean(){
@@ -1355,6 +1568,7 @@ function tourClean(){
   state.movs=realMovs; state.month=T.month0; state.confirmId=null;
   $('f-amt').value=''; $('f-note').value=''; $('f-date').value=T.date0||today(); setType('out');
   $('f-msg').className=T.msg0[0]; $('f-msg').textContent=T.msg0[1];
+  showTab('inicio',{hist:false});
   tourSet('done'); draw();
 }
 function tourExit(){ tourSkip(); }
@@ -1363,7 +1577,9 @@ function tourGo(i){
   T.i=i; T.last='';
   const s=TOUR[i], tip=$('tourTip'), root=$('tour');
   if(s.id==='end') tourClean();
+  if(s.tab && tabsOn()) showTab(s.tab,{hist:false,scroll:false});
   if(s.enter) s.enter();
+  root.classList.toggle('hide-skip', !!s.noSkip);
   root.classList.toggle('is-center', !!s.center);
   root.classList.toggle('is-act', !!s.act);
   const nx=$('tourNext'), dz=$('tourDo');
@@ -1383,12 +1599,13 @@ function tourGo(i){
     else if(fresh){ nx.textContent='Anotar mi primer ingreso'; T.endMain=anotar; dz.hidden=true; }
     else { nx.textContent='Cerrar'; T.endMain=null; dz.hidden=true; }
   } else {
-    $('tourN').textContent='Paso '+i+' de '+NSTEPS;
-    $('tourBar').style.width=(i/NSTEPS*100)+'%';
+    const vs=tSteps(), k=vs.indexOf(s)+1;
+    $('tourN').textContent='Paso '+k+' de '+vs.length;
+    $('tourBar').style.width=(k/vs.length*100)+'%';
     $('tourT').textContent=s.t;
     $('tourP').innerHTML=typeof s.p==='function' ? s.p() : s.p;
     if(s.act){ dz.textContent='Hacelo por mí'; nx.hidden=!s.input; nx.textContent='Siguiente'; nx.disabled=!amtOk(); }
-    else { dz.hidden=true; nx.textContent = i===NSTEPS ? 'Terminar' : 'Siguiente'; }
+    else { dz.hidden=true; nx.textContent = k===vs.length ? 'Terminar' : 'Siguiente'; }
   }
   if(s.center){ tip.classList.remove('swap'); setTimeout(()=>nx.focus(), 40); return; }
   tip.classList.add('swap');
@@ -1408,11 +1625,12 @@ function tourRect(s){
   const P=s.act?6:8; return {t:t-P, l:l-P, b:b+P, r:r+P};
 }
 function tourScroll(s){
+  if(s.fixed) return;
   const q=tourRect(s); if(!q) return;
   const vh=window.visualViewport ? visualViewport.height : innerHeight;
   const h=q.b-q.t, th=$('tourTip').offsetHeight||180;
   const off = s.input ? Math.min(Math.max(16, th+62), Math.max(16, vh-h-16))
-    : (h+th+56 < vh-66 ? Math.max(12,(vh-66-(h+th+56))/2) : 16);
+    : (h+th+56 < vh-66-tabH() ? Math.max(12,(vh-66-tabH()-(h+th+56))/2) : 16);
   window.scrollTo({top:Math.max(0, scrollY+q.t-off), behavior: reduceMo() ? 'auto' : 'smooth'});
 }
 function tourPlace(){ try{ tourPlace1(); }catch(e){} }
@@ -1421,7 +1639,7 @@ function tourPlace1(){
   const q=tourRect(s);
   $('tour').classList.toggle('no-target', !q);
   if(!q) return;
-  const vv=window.visualViewport, vt=vv?vv.offsetTop:0, vh=(vv?vv.height:innerHeight) - 66;
+  const vv=window.visualViewport, vt=vv?vv.offsetTop:0, vh=(vv?vv.height:innerHeight) - (s.noSkip?0:66) - tabH();
   const vw=document.documentElement.clientWidth, H=innerHeight;
   const tip=$('tourTip'), th=tip.offsetHeight, tw=tip.offsetWidth;
   const key=[q.t,q.l,q.b,q.r,vt,vh,vw,th].map(Math.round).join();
@@ -1444,7 +1662,7 @@ function tourPlace1(){
 function tourEvt(kind, v){
   if(!T.on || !T.ui) return;
   const s=TOUR[T.i];
-  if(kind==='type' && s.wait==='type-'+v) tourGo(T.i+1);
+  if((kind==='type'||kind==='tab') && s.wait===kind+'-'+v) tourGo(nextIdx(T.i));
   else if(kind==='add'){
     if(v.type==='in' && (s.id==='inAmt'||s.id==='inAdd')) tourGo(tIdx('split'));
     else if(v.type==='out' && (s.id==='outAmt'||s.id==='outAdd')){ T.spentB=v.bucket; tourGo(tIdx('spent')); }
@@ -1456,16 +1674,15 @@ $('tourNext').onclick = () => {
   if(s.id==='welcome') return tourStart();
   if(s.id==='end'){ const a=T.endMain; tourClose(); if(a) a(); return; }
   if(s.input && !amtOk()){ $('f-amt').focus(); return; }
-  if(T.i===NSTEPS) return tourGo(tIdx('end'));
-  tourGo(T.i+1);
+  tourGo(nextIdx(T.i));
 };
 $('tourDo').onclick = () => {
   const s=TOUR[T.i];
   if(s.id==='welcome') return tourSkip();
   if(s.id==='end'){ const a=T.endAlt; tourClose(); if(a) a(); return; }
-  if(s.input){ $('f-amt').value=s.fill; if(s.enter) s.enter(); return tourGo(T.i+1); }
+  if(s.input){ $('f-amt').value=s.fill; if(s.enter) s.enter(); return tourGo(nextIdx(T.i)); }
   if(s.submit){ if(!amtOk()) $('f-amt').value=s.fill; $('f-submit').click(); return; }
-  if(s.doIt && s.doIt()) tourGo(T.i+1);
+  if(s.doIt && s.doIt()) tourGo(nextIdx(T.i));
 };
 $('tourX').onclick = tourExit;
 ['tourFull','tourDim','tb1','tb2','tb3','tb4'].forEach(id => $(id).addEventListener('click', tourNudge));
@@ -1495,6 +1712,7 @@ function tourMaybe(){
 // ---------- arranque ----------
 $('f-date').value = today();
 setType('out');
+showTab('inicio',{hist:false,scroll:false});
 draw();
 
 store = localStore();
