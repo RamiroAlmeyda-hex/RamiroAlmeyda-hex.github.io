@@ -48,6 +48,8 @@ svg{flex:none}
 .glass::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;background:radial-gradient(120% 70% at 30% 0%,rgba(255,255,255,.12),rgba(255,255,255,0) 55%)}
 .glass>*:not(.bub):not(.mbg):not(.paused-ic){position:relative;z-index:3}
 .glass.lq-on{-webkit-backdrop-filter:var(--lq);backdrop-filter:var(--lq)}
+/* mientras se desplaza, vidrio simple: la refracción se recalcula en cada cuadro y traba */
+.scr .glass.lq-on{-webkit-backdrop-filter:blur(14px) saturate(170%);backdrop-filter:blur(14px) saturate(170%)}
 .ib{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;flex:none}
 .ib svg{width:22px;height:22px}
 .avatar{background:var(--grad);color:#1d0d12;font-weight:800;font-size:1.1rem}
@@ -689,7 +691,7 @@ function renderTop(){
   const sub=$('#sub');
   if(S.tab==='search'){
     sub.innerHTML = `<label class="search">${I.search}<input id="q" type="search" placeholder="Mes, año, álbum, nombre…" autocomplete="off" enterkeyhint="search" aria-label="Buscar en tus fotos y videos"></label>`;
-    const q=$('#q'); q.value=S.q; q.addEventListener('input', () => { S.q=q.value; renderMain(); });
+    const q=$('#q'); q.value=S.q; q.addEventListener('input', () => { S.q=q.value; searchSchedule(); });
   } else {
     const cur = S.tab==='home' ? S.chip : S.libChip;
     const list = S.tab==='lib' ? [...CHIPS, ['albums','Álbumes']] : CHIPS;
@@ -719,7 +721,7 @@ function renderMain(){
   main.classList.toggle('selmode', !!S.sel);
   if(S.tab==='home') main.innerHTML = homeHTML();
   else if(S.tab==='lib'){ main.innerHTML = libHTML(); libObserve(); }
-  else main.innerHTML = searchHTML();
+  else { main.innerHTML = searchHTML(); gmoreObserve(main); }
   scrubUpdate();
 }
 function refresh(){ renderTop(); renderMain(); refreshers.forEach(f=>f()); if(S.sel) renderSel(); }
@@ -819,38 +821,69 @@ function libObserve(){
   libIO.observe(s);
 }
 
-function searchHTML(){
+// Textos de búsqueda de cada foto: se arman una sola vez, no en cada letra que escribís.
+const MES_N=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const DIA_N=['domingo','lunes','martes','miercoles','jueves','viernes','sabado'];
+let HAY = {items:null, sig:'', map:null};
+function hayMap(){
+  let fav=0; for(const m of S.items) if(m.fav) fav++;
+  const sig = fav+'|'+S.albums.map(a=>a.name+':'+(a.ids||[]).length).join('|');
+  if(HAY.map && HAY.items===S.items && HAY.sig===sig) return HAY.map;
+  const inAlb = new Map(); S.albums.forEach(a => (a.ids||[]).forEach(id => inAlb.set(id, (inAlb.get(id)||'')+' '+a.name)));
+  const map = new Map();
+  for(const m of S.items){
+    const d=new Date(m.date);
+    map.set(m.id, norm([m.name, m.bucket||'', m.bucket?fname(m.bucket):'', d.getDate()+' de '+MES_N[d.getMonth()]+' de '+d.getFullYear(), DIA_N[d.getDay()],
+      m.type==='video'?'video videos':'foto fotos imagen', m.fav?'favorito favoritos':'', inAlb.get(m.id)||''].join(' ')));
+  }
+  HAY = {items:S.items, sig, map}; return map;
+}
+function searchHTML(){ return `<div id="aiBox">${aiBoxHTML()}</div><div id="sres">${searchResHTML()}</div>`; }
+let srT=0;
+function searchPaint(){ if(S.tab!=='search') return; const r=$('#sres'); if(!r) return renderMain(); r.innerHTML=searchResHTML(); gmoreObserve(r); }
+function searchSchedule(){ clearTimeout(srT); if(!S.q.trim()) return searchPaint(); srT=setTimeout(searchPaint, 150); }
+// Resultados en tandas: primero los que se ven, el resto a medida que bajás.
+const GCHUNK=60;
+function gridChunkHTML(ids, ctx){ CTX[ctx]=ids; const n=Math.min(ids.length, GCHUNK);
+  return `<div class="grid">${ids.slice(0,n).map((id,i)=>tileHTML(id,ctx,i)).join('')}</div>${ids.length>n?`<div class="gmore" data-gmore="${ctx}" data-n="${n}" aria-hidden="true"></div>`:''}`; }
+let gmIO=null;
+function gmoreObserve(root){
+  if(!gmIO) gmIO = new IntersectionObserver(es => es.forEach(e => {
+    if(!e.isIntersecting) return;
+    const sn=e.target, ctx=sn.dataset.gmore, ids=CTX[ctx]||[], n=+sn.dataset.n, g=sn.previousElementSibling;
+    if(!g || !document.contains(sn)){ gmIO.unobserve(sn); return; }
+    const to=Math.min(ids.length, n+90);
+    g.insertAdjacentHTML('beforeend', ids.slice(n,to).map((id,i)=>tileHTML(id,ctx,n+i)).join(''));
+    sn.dataset.n=to; gmIO.unobserve(sn);
+    if(to>=ids.length) sn.remove(); else requestAnimationFrame(()=>gmIO.observe(sn));
+  }), {rootMargin:'1400px 0px'});
+  root.querySelectorAll('.gmore').forEach(sn=>gmIO.observe(sn));
+}
+function searchResHTML(){
   const q=norm(S.q).trim();
-  const box=`<div id="aiBox">${aiBoxHTML()}</div>`;
   const aiOn = natHas('aiSearch') && S.ai && S.ai.ai==='ready' && S.ai.embedded>0;
   if(!q){
     const sug = new Set(['Favoritos','Videos','Fotos']);
     S.albums.slice(0,6).forEach(a=>sug.add(a.name));
     [...new Set(S.items.map(m=>mKey(m.date)))].slice(0,6).forEach(k=>sug.add(mLabel(k)));
     const smart = aiOn ? `<div class="sec"><h2>${I.ai.replace('<svg','<svg style="width:20px;height:20px;vertical-align:-2px;color:var(--a1)"')} Buscá lo que aparece</h2><div class="chips" style="flex-wrap:wrap;margin:0;padding:0">${['remera roja','perro','playa','torta de cumpleaños','auto','atardecer','comida','montaña'].map(s=>`<button class="chip" type="button" data-sug="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>` : '';
-    return box + smart + (S.items.length ? `<div class="sec"><h2>Probá con</h2><div class="chips" style="flex-wrap:wrap;margin:0;padding:0">${[...sug].map(s=>`<button class="chip" type="button" data-sug="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>` : `<p class="note">Cuando agregues fotos y videos, vas a poder buscarlos por mes, año, álbum o nombre.</p>`);
+    return smart + (S.items.length ? `<div class="sec"><h2>Probá con</h2><div class="chips" style="flex-wrap:wrap;margin:0;padding:0">${[...sug].map(s=>`<button class="chip" type="button" data-sug="${esc(s)}">${esc(s)}</button>`).join('')}</div></div>` : `<p class="note">Cuando agregues fotos y videos, vas a poder buscarlos por mes, año, álbum o nombre.</p>`);
   }
-  const words=q.split(/\s+/);
-  const inAlb = new Map(); S.albums.forEach(a => a.ids.forEach(id => inAlb.set(id, (inAlb.get(id)||'')+' '+a.name)));
-  const res = S.items.filter(m => {
-    const d=new Date(m.date);
-    const hay = norm([m.name, m.bucket||'', m.bucket?fname(m.bucket):'', d.toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'}), d.toLocaleDateString('es-AR',{weekday:'long'}),
-      m.type==='video'?'video videos':'foto fotos imagen', m.fav?'favorito favoritos':'', inAlb.get(m.id)||''].join(' '));
-    return words.every(w => hay.includes(w) || (w.length>3 && hay.includes(w.replace(/s$/,''))));
-  }).map(m=>m.id);
+  const words=q.split(/\s+/), H=hayMap();
+  const res = S.items.filter(m => { const hay=H.get(m.id)||''; return words.every(w => hay.includes(w) || (w.length>3 && hay.includes(w.replace(/s$/,'')))); }).map(m=>m.id);
   let smart='';
   const done = S.aiRes && S.aiRes.q===q;
   if(aiOn){
     if(done){
-      smart = S.aiRes.ids.length ? `<div class="mhead"><h3>${I.ai}Por lo que aparece</h3><span>${countLabel(S.aiRes.ids)}</span></div>${gridHTML(S.aiRes.ids,'ai')}`
+      smart = S.aiRes.ids.length ? `<div class="mhead"><h3>${I.ai}Por lo que aparece</h3><span>${countLabel(S.aiRes.ids)}</span></div>${gridChunkHTML(S.aiRes.ids,'ai')}`
                                  : `<p class="note">La búsqueda inteligente no encontró “${esc(S.q.trim())}” en tus fotos.</p>`;
     } else { smart = `<p class="note">${I.ai.replace('<svg','<svg style="width:16px;height:16px;vertical-align:-2px;color:var(--a1)"')} Buscando “${esc(S.q.trim())}” en tus fotos…</p>`; aiSearch(S.q); }
   }
   const aiSet = done ? new Set(S.aiRes.ids) : null;
   const txtIds = aiSet ? res.filter(id=>!aiSet.has(id)) : res;
-  const txt = txtIds.length ? `<div class="mhead"><h3>${aiOn?'Por nombre, fecha o álbum':'Resultados'}</h3><span>${countLabel(txtIds)}</span></div>${gridHTML(txtIds,'sr')}` : '';
-  if(!smart && !txt) return box + `<p class="note">No encontramos nada con “${esc(S.q.trim())}”. Probá con un mes, un año o el nombre de un álbum.</p>`;
-  return box + smart + txt;
+  const txt = txtIds.length ? `<div class="mhead"><h3>${aiOn?'Por nombre, fecha o álbum':'Resultados'}</h3><span>${countLabel(txtIds)}</span></div>${gridChunkHTML(txtIds,'sr')}` : '';
+  if(!smart && !txt) return `<p class="note">No encontramos nada con “${esc(S.q.trim())}”. Probá con un mes, un año o el nombre de un álbum.</p>`;
+  return smart + txt;
 }
 
 // ---------- clics del contenido ----------
@@ -986,7 +1019,7 @@ async function profileSheet(){
     <button class="opt" type="button" data-pr="priv"><span class="oi">${I.lock}</span><span>Carpeta privada<small>${natHas('auth')?'Con tu huella, tu cara o el bloqueo del celular':'Protegida con un PIN'}</small></span></button>
     ${samples?`<button class="opt" type="button" data-rs><span class="oi">${I.sparkle}</span><span>Quitar los ejemplos<small>${pl(samples,'elemento','elementos')} de prueba</small></span></button>`:''}
     ${S.items.length&&!NAT?`<button class="opt danger" type="button" data-all><span class="oi">${I.trash}</span><span>Borrar todo de Lumen<small>No toca la galería de tu celular</small></span></button>`:''}</div>
-    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v3.0</p>`,
+    ${credit()}<p style="text-align:center;margin:10px 0 0;font-size:.85rem">Lumen v3.1</p>`,
     (el, close) => {
       el.addEventListener('click', ev => { const b=ev.target.closest('[data-pr]'); if(!b) return; const k=b.dataset.pr; close(); setTimeout(() => k==='year' ? openYear(yearNow()) : k==='clean' ? openClean() : openPriv(), 60); });
       const pn=el.querySelector('#pn');
@@ -1150,7 +1183,7 @@ const LQ = (() => {
   const ok=/Chrome\/|Chromium\//.test(ua) && !iOS && !/Firefox\//.test(ua) && !!window.ResizeObserver && !reduce();
   const NS='http://www.w3.org/2000/svg', fx=document.getElementById('lqfx'), made=new Map();
   const BLUR=4, SCALE=30, SAT=1.6;
-  const SEL='.pill,.sbtn,.mini,.selbar,.vbot,.vtop .ib,#addBtn,.ch .ib,.cbar .ib,.mem .play,.toast';
+  const SEL='.pill,.sbtn,#addBtn';
   // mapa de desplazamiento: en el borde empuja la imagen de atrás hacia afuera, como una lente
   function map(w,h,r,band){
     const c=document.createElement('canvas'); c.width=w; c.height=h; const g=c.getContext('2d'), im=g.createImageData(w,h), d=im.data;
@@ -1540,7 +1573,12 @@ function scrubUpdate(){
   if(tl){ const f=(+tl.dataset.i)/(CTX.lib.length-1||1); sc.querySelector('.knob').style.top=(f*100)+'%'; }
   sc.classList.add('on'); clearTimeout(SCB.hideT); SCB.hideT=setTimeout(()=>{ if(!sc.classList.contains('drag')) sc.classList.remove('on'); }, 1400);
 }
-let scRaf=0; addEventListener('scroll', () => { if(scRaf) return; scRaf=requestAnimationFrame(()=>{ scRaf=0; scrubUpdate(); }); }, {passive:true});
+let scRaf=0, scrT=0; const HTM=document.documentElement;
+addEventListener('scroll', () => {
+  if(!HTM.classList.contains('scr')) HTM.classList.add('scr');
+  clearTimeout(scrT); scrT=setTimeout(()=>HTM.classList.remove('scr'), 180);
+  if(scRaf) return; scRaf=setTimeout(()=>{ scRaf=0; scrubUpdate(); }, 90);
+}, {passive:true});
 function libJump(idx){
   const sel=`.tile[data-ctx="lib"][data-i="${idx}"]`;
   let tl=document.querySelector(sel);
@@ -1844,18 +1882,27 @@ function aiBoxHTML(){
     ${a.ai==='error'?'<p style="color:#ff9a9a">No se pudo descargar. Revisá la conexión y probá de nuevo.</p>':''}
     <button class="btn" type="button" data-act="aiinstall">Activar (180 MB, mejor con wifi)</button></div></div>`;
 }
+let aiReq=0, aiPend=null;
 function aiSearch(q){
   clearTimeout(aiT);
   if(!natHas('aiSearch') || !S.ai || S.ai.ai!=='ready' || !(S.ai.embedded>0)) return;
+  const bg = natHas('aiSearchAsync');
   aiT=setTimeout(() => {
-    const qq=q.trim(); if(!qq || norm(S.q).trim()!==norm(qq)) return;
-    let r=null; try{ r=JSON.parse(NAT.aiSearch(JSON.stringify({es:toNeutral(qq), en:toEnglish(qq)}))); }catch(e){}
-    if(!r || r.error) { S.aiRes={q:norm(qq), ids:[], en:'', err:true}; }
-    else { const ids=(r.results||[]).map(([k])=>{ const [t,n]=k.split(':'); return t+n; }).filter(id=>S.byId.has(id) && !S.priv.has(id)); S.aiRes={q:norm(qq), ids, en:r.en||''}; }
-    if(S.tab==='search') renderMain();
-  }, 420);
+    const qq=q.trim(), nq=norm(qq); if(!qq || norm(S.q).trim()!==nq) return;
+    if(aiPend && aiPend.q===nq) return;
+    const payload = JSON.stringify({es:toNeutral(qq), en:toEnglish(qq)});
+    if(bg){ aiPend={id:String(++aiReq), q:nq}; try{ NAT.aiSearchAsync(payload, aiPend.id); }catch(e){ aiPend=null; } return; }
+    let r=null; try{ r=JSON.parse(NAT.aiSearch(payload)); }catch(e){}
+    aiDone(nq, r);
+  }, bg ? 300 : 700);
 }
-window.__lumenNative2 = (ev, a) => {
+function aiDone(nq, r){
+  if(!r || r.error) S.aiRes={q:nq, ids:[], en:'', err:true};
+  else { const ids=(r.results||[]).map(([k])=>{ const [t,n]=k.split(':'); return t+n; }).filter(id=>S.byId.has(id) && !S.priv.has(id)); S.aiRes={q:nq, ids, en:r.en||''}; }
+  if(S.tab==='search' && norm(S.q).trim()===nq) searchPaint();
+}
+window.__lumenNative2 = (ev, a, b) => {
+  if(ev==='aisearch'){ const p=aiPend; if(p && String(a)===p.id){ aiPend=null; let r=null; try{ r=JSON.parse(b); }catch(e){} aiDone(p.q, r); } return; }
   if(ev==='ai' || ev==='index'){ try{ S.ai=Object.assign(S.ai||{}, typeof a==='string'?JSON.parse(a):a); }catch(e){} const b=$('#aiBox'); if(b) b.innerHTML=aiBoxHTML(); }
   if(ev==='hashes'){ loadHashes(); }
   if(ev==='auth'){ const cb=authWait.cb; authWait.cb=null; if(cb) cb(a); }
